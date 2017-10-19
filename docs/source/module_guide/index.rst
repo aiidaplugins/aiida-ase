@@ -1,6 +1,6 @@
-============================================
-Modules provided with plugin (API reference)
-============================================
+================================================
+Modules provided with ASE plugin (API reference)
+================================================
 
 .. toctree::
     :maxdepth: 3
