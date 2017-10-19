@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from aiida.orm.calculation.job.aseplugins.ase import AseCalculation
+from aiida_ase.calculations.ase import AseCalculation
 from aiida.orm.data.folder import FolderData
 from aiida.parsers.parser import Parser
 from aiida.common.datastructures import calc_states
