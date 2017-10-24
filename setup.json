@@ -1,19 +1,12 @@
 {
-    "version": "0.1.0",
-    "name": "aiida_ase",
-    "url": "https://github.com/aiidateam/aiida-ase",
-    "license": "MIT License",
-    "author": "Sebastiaan P. Huber",
-    "author_email": "mail@sphuber.net",
-    "description": "The AiiDA plugin for ASE",
+    "author": "The AiiDA team",
+    "author_email": "developers@aiida.net",
     "classifiers": [
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2.7",
         "Development Status :: 4 - Beta"
     ],
-    "install_requires": [
-        "aiida"
-    ],
+    "description": "The official AiiDA plugin for ASE",
     "entry_points": {
         "aiida.calculations": [
             "ase.ase = aiida_ase.calculations.ase:AseCalculation"
@@ -21,5 +14,22 @@
         "aiida.parsers": [
             "ase.ase = aiida_ase.parsers.ase:AseParser"
         ]
-    }
+    },
+    "extras_require": {
+        "dev_precommit": [
+            "pre-commit"
+        ],
+        "docs": [
+            "Sphinx",
+            "docutils",
+            "sphinx_rtd_theme"
+        ]
+    },
+    "install_requires": [
+        "aiida-core>=0.10.0"
+    ],
+    "license": "MIT License",
+    "name": "aiida_ase",
+    "url": "https://github.com/aiidateam/aiida-ase",
+    "version": "1.0.0"
 }
