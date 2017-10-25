@@ -26,10 +26,10 @@
         ]
     },
     "install_requires": [
-        "aiida-core>=0.10.0"
+        "aiida-core>=0.10.0rc1"
     ],
     "license": "MIT License",
     "name": "aiida_ase",
     "url": "https://github.com/aiidateam/aiida-ase",
-    "version": "1.0.0"
+    "version": "1.0.1"
 }
