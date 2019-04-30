@@ -37,7 +37,7 @@ If you use AiiDA or this plugin for your research, please cite the following wor
 .. highlights:: Giovanni Pizzi, Andrea Cepellotti, Riccardo Sabatini, Nicola Marzari,
   and Boris Kozinsky, *AiiDA: automated interactive infrastructure and database
   for computational science*, Comp. Mat. Sci 111, 218-230 (2016);
-  http://dx.doi.org/10.1016/j.commatsci.2015.09.013; http://www.aiida.net.
+  https://doi.org/10.1016/j.commatsci.2015.09.013; http://www.aiida.net.
 
 User's guide
 ++++++++++++
