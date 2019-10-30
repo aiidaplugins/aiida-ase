@@ -16,8 +16,8 @@ class AseCalculation(CalcJob):
     _INPUT_FILE_NAME = 'aiida_script.py'
     _OUTPUT_FILE_NAME = 'results.json'
     _TXT_OUTPUT_FILE_NAME = 'aiida.out'
-    _input_aseatoms = 'aiida_atoms.traj'
-    _output_aseatoms = 'aiida_out_atoms.traj'
+    _input_aseatoms = 'aiida_atoms.json'
+    _output_aseatoms = 'aiida_out_atoms.json'
 
     @classmethod
     def define(cls, spec):
@@ -75,7 +75,7 @@ class AseCalculation(CalcJob):
         atoms = self.inputs.structure.get_ase()
 
         with folder.open(self._input_aseatoms, 'w') as handle:
-            atoms.write(handle)
+            atoms.write(handle, format='json')
 
         # ================== prepare the arguments of functions ================
 
@@ -264,13 +264,13 @@ class AseCalculation(CalcJob):
         # Dump results to file
         right_open = "paropen" if self.options.withmpi else "open"
         input_txt += "with {}('{}', 'w') as f:\n".format(right_open, self._OUTPUT_FILE_NAME)
-        input_txt += "    json.dump(results,f)"
+        input_txt += "    json.dump(results,f)\n"
         input_txt += "\n"
 
-        # Dump trajectory if present
-        if optimizer is not None:
-            input_txt += "atoms.write('{}')\n".format(self._output_aseatoms)
-            input_txt += "\n"
+        # Always dump the resulting structure because even if we do not specify an explicit ASE optimizer, the
+        # calculation itself can perform an internal optimization producing a new structure.
+        input_txt += "atoms.write('{}')\n".format(self._output_aseatoms)
+        input_txt += "\n"
 
         # write all the input script to a file
         with folder.open(self._INPUT_FILE_NAME, 'w') as handle:
