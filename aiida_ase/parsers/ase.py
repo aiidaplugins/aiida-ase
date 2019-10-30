@@ -2,7 +2,7 @@
 import json
 import numpy
 
-import ase
+import ase.io
 
 from aiida import orm
 from aiida.common import exceptions
@@ -31,23 +31,19 @@ class AseParser(Parser):
         except exceptions.NotExistent:
             return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
 
-        # select the folder object
-        output_folder = self._calc.get_retrieved_node()
-
         # check what is inside the folder
-        list_of_files = output_folder.get_content_list()
+        list_of_files = output_folder.list_object_names()
 
         # at least the stdout should exist
         if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:
             self.logger.error('Standard output not found')
             return self.exit_codes.ERROR_OUTPUT_FILES
 
-        # output structure
-        has_out_atoms = True if AseCalculation._output_aseatoms in list_of_files else False
-        if has_out_atoms:
-            with output_folder.open(AseCalculation._output_aseatoms, 'rb') as handle:
-                atoms = ase.io.read(handle)
-                structure = orm.StructureData().set_ase(atoms)
+        if AseCalculation._output_aseatoms in list_of_files:
+            with output_folder.open(AseCalculation._output_aseatoms, 'r') as handle:
+                atoms = ase.io.read(handle, format='json')
+                structure = orm.StructureData()
+                structure.set_ase(atoms)
                 self.out('structure', structure)
 
         filename_stdout = self.node.get_attribute('output_filename')
