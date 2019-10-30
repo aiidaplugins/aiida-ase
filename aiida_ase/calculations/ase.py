@@ -25,7 +25,7 @@ class AseCalculation(CalcJob):
         super(AseCalculation, cls).define(spec)
         spec.input('metadata.options.input_filename', valid_type=six.string_types, default=cls._INPUT_FILE_NAME,
             help='Filename to which the input for the code that is to be run will be written.')
-        spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._TXT_OUTPUT_FILE_NAME,
+        spec.input('metadata.options.output_filename', valid_type=six.string_types, default=cls._OUTPUT_FILE_NAME,
             help='Filename to which the content of stdout of the code that is to be run will be written.')
         spec.input('metadata.options.error_filename', valid_type=six.string_types, default='aiida.err',
             help='Filename to which the content of stderr of the code that is to be run will be written.')
@@ -297,7 +297,7 @@ class AseCalculation(CalcJob):
         codeinfo = CodeInfo()
         codeinfo.cmdline_params = [self._INPUT_FILE_NAME]
         #calcinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._TXT_OUTPUT_FILE_NAME
+        codeinfo.stdout_name = self.options.output_filename
         codeinfo.code_uuid = self.inputs.code.uuid
         calcinfo.codes_info = [codeinfo]
 
