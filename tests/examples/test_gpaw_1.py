@@ -51,16 +51,19 @@ def main():
                         'run_args':{"fmax":0.05},
                         }}
     builder.parameters = orm.Dict(dict=parameters)
+    settings = {"CMDLINE":"python"}
+    builder.settings = orm.Dict(dict=settings)
 
     ### setup the labels and other book-keeping things
     # builder.label = 'Test calculation for GPAW'
     # builder.description = 'BaTiO3 ASE test calculation witH GPAW as a calculator'
     builder.metadata.options.resources = {'num_machines':1}
     builder.metadata.options.max_wallclock_seconds = 60 * 60
-    builder.metadata.dry_run = True
-    builder.metadata.store_provenance = False
+    # builder.metadata.dry_run = True
+    # builder.metadata.store_provenance = False
 
     engine.submit(ASECalculation, **builder)
+    # engine.run(ASECalculation, **builder)
 
 
 

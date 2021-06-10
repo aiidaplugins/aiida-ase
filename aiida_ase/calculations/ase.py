@@ -32,14 +32,13 @@ class AseCalculation(CalcJob):
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default=cls._default_parser,
             help='Define the parser to be used by setting its entry point name.')
 
-        spec.input('structure', valid_type=orm.StructureData, required=True,
-            help='')
-        spec.input('parameters', valid_type=orm.Dict, required=False,
-            help='')
-        spec.input('kpoints', valid_type=orm.KpointsData, required=False,
-            help='')
+        spec.input('structure', valid_type=orm.StructureData, required=True, help='Structure')
+        spec.input('parameters', valid_type=orm.Dict, required=False, 
+                    help='Calculation parameters for the ASE calculator')
+        spec.input('kpoints', valid_type=orm.KpointsData, required=False, 
+                    help='k-points to be used in the calculation')
         spec.input('settings', valid_type=orm.Dict, required=False,
-            help='')
+            default=lambda: orm.Dict(dict={}), help='Use this for specifying cmdline parameters')
 
         spec.output('structure', valid_type=orm.StructureData, required=False,
             help='The `structure` output node of the successful calculation if present.')
@@ -61,10 +60,10 @@ class AseCalculation(CalcJob):
         :param folder: an aiida.common.folders.Folder to temporarily write files on disk
         :returns: CalcInfo instance
         """
-        if 'settings' in self.inputs:
-            settings = self.inputs.settings.get_dict()
-        else:
-            settings = {}
+        # if 'settings' in self.inputs:
+        settings = self.inputs.settings.get_dict()
+        # else:
+            # settings = {}
 
         # default atom getter: I will always retrieve the total energy at least
         default_atoms_getters = [["total_energy", ""]]
@@ -295,7 +294,7 @@ class AseCalculation(CalcJob):
         calcinfo.remote_copy_list = remote_copy_list
 
         codeinfo = CodeInfo()
-        codeinfo.cmdline_params = [self._INPUT_FILE_NAME]
+        codeinfo.cmdline_params = [settings.pop('CMDLINE', []), self._INPUT_FILE_NAME]
         #calcinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self.options.output_filename
         codeinfo.code_uuid = self.inputs.code.uuid

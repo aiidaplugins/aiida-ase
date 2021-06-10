@@ -1,18 +1,3 @@
-# -*- coding: utf-8 -*-
-###########################################################################
-# Copyright (c), The AiiDA team. All rights reserved.                     #
-# This file is part of the AiiDA code.                                    #
-#                                                                         #
-# The code is hosted on GitHub at https://github.com/aiidateam/aiida_core #
-# For further information on the license, see the LICENSE.txt file        #
-# For further information please visit http://www.aiida.net               #
-###########################################################################
-
-import sys
-import os
-from aiida.common.exceptions import NotExistent
-
-################################################################
 ###########################################################################
 ## A simple test script for AiiDA-ase with a set of simple set of         #
 ## parameters including QuasiNewton and PW operation mode with GPAW       #
