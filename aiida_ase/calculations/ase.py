@@ -31,6 +31,9 @@ class AseCalculation(CalcJob):
             help='Filename to which the content of stderr of the code that is to be run will be written.')
         spec.input('metadata.options.parser_name', valid_type=six.string_types, default=cls._default_parser,
             help='Define the parser to be used by setting its entry point name.')
+        spec.input('metadata.options.stdout_file', valid_type=six.string_types, default=cls._TXT_OUTPUT_FILE_NAME,
+            help='Define the file that ASE will write extra stdout to')
+         
 
         spec.input('structure', valid_type=orm.StructureData, required=True, help='Structure')
         spec.input('parameters', valid_type=orm.Dict, required=False, 
@@ -60,10 +63,10 @@ class AseCalculation(CalcJob):
         :param folder: an aiida.common.folders.Folder to temporarily write files on disk
         :returns: CalcInfo instance
         """
-        # if 'settings' in self.inputs:
-        settings = self.inputs.settings.get_dict()
-        # else:
-            # settings = {}
+        if 'settings' in self.inputs:
+            settings = self.inputs.settings.get_dict()
+        else:
+            settings = {}
 
         # default atom getter: I will always retrieve the total energy at least
         default_atoms_getters = [["total_energy", ""]]
@@ -296,7 +299,7 @@ class AseCalculation(CalcJob):
         codeinfo = CodeInfo()
         codeinfo.cmdline_params = [settings.pop('CMDLINE', []), self._INPUT_FILE_NAME]
         #calcinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self.options.output_filename
+        codeinfo.stdout_name = self.options.stdout_file#_TXT_OUTPUT_FILE_NAME#self.options.output_filename
         codeinfo.code_uuid = self.inputs.code.uuid
         calcinfo.codes_info = [codeinfo]
 
