@@ -41,45 +41,30 @@ def main():
 
     ### setup the parameters
     parameters = {"calculator": {"name":"gpaw",
-                             "args":{"mode":{"@function":"PW",
-                                             "args":{"ecut":300}
-                             }}},
-              'atoms_getters':["temperature",
-                               ["forces",{'apply_constraint':True}],
-                               ["masses",{}],
-                               ],
-              'calculator_getters':[["potential_energy",{}],
-                                    "spin_polarized",
-                                    ["stress",['atoms']],
-                                    #["orbital_dos",['atoms', {'spin':0}] ],
-                                    ],
-              'optimizer':{'name':'QuasiNewton',
-                           "args": {'alpha':0.9},
-                           'run_args':{"fmax":0.05}
-                           },
-            
-              "pre_lines":["# This is a set",
-                           "# of various pre-lines"],
-            
-              "post_lines":["# This is a set",
-                           "# of various post-lines"],
-            
-              "extra_imports":["os",
-                               ["numpy","array"],
-                               ["numpy","array","ar"],
-                               ],
-              }
+                            "args":{"mode":{"@function":"PW",
+                                            "args":{"ecut":300}
+                            }}},
+            'atoms_getters':["temperature"],
+            'calculator_getters':[["potential_energy",{}]],
+             "pre_lines":["# This is a set",
+                           "# of various pre-lines",
+                           "from gpaw import PW"],
+                        }
     builder.parameters = orm.Dict(dict=parameters)
+    settings = {"CMDLINE":"python"}
+    builder.settings = orm.Dict(dict=settings)
 
     ### setup the labels and other book-keeping things
     # builder.label = 'Test calculation for GPAW'
     # builder.description = 'BaTiO3 ASE test calculation witH GPAW as a calculator'
     builder.metadata.options.resources = {'num_machines':1}
     builder.metadata.options.max_wallclock_seconds = 60 * 60
-    builder.metadata.dry_run = True
-    builder.metadata.store_provenance = False
+    builder.metadata.options.withmpi = True
+    # builder.metadata.dry_run = True
+    # builder.metadata.store_provenance = False
 
     engine.submit(ASECalculation, **builder)
+    # engine.run(ASECalculation, **builder)
 
 
 

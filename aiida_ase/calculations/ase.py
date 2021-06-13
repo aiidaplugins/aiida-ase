@@ -18,6 +18,7 @@ class AseCalculation(CalcJob):
     _TXT_OUTPUT_FILE_NAME = 'aiida.out'
     _input_aseatoms = 'aiida_atoms.json'
     _output_aseatoms = 'aiida_out_atoms.json'
+    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
 
     @classmethod
     def define(cls, spec):
@@ -33,6 +34,8 @@ class AseCalculation(CalcJob):
             help='Define the parser to be used by setting its entry point name.')
         spec.input('metadata.options.stdout_file', valid_type=six.string_types, default=cls._TXT_OUTPUT_FILE_NAME,
             help='Define the file that ASE will write extra stdout to')
+        spec.input('metadata.options.optimizer_stdout', valid_type=six.string_types, default=cls._OPTIMIZER_FILE_NAME, 
+            help='Optimiser filename for relaxation')
          
 
         spec.input('structure', valid_type=orm.StructureData, required=True, help='Structure')
@@ -46,9 +49,9 @@ class AseCalculation(CalcJob):
         spec.output('structure', valid_type=orm.StructureData, required=False,
             help='The `structure` output node of the successful calculation if present.')
         spec.output('parameters', valid_type=orm.Dict, required=False,
-            help='')
+            help='The `Dict` which will contain all the requested atom-getters and calc-getters')
         spec.output('array', valid_type=orm.ArrayData, required=False,
-            help='')
+            help='This array will be there if there are any arrays asked for')
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES',
             message='One of the expected output files was missing.')
@@ -69,11 +72,12 @@ class AseCalculation(CalcJob):
             settings = {}
 
         # default atom getter: I will always retrieve the total energy at least
+        # This is one of the ways to "start" the calculation
         default_atoms_getters = [["total_energy", ""]]
 
         # ================================
 
-        # save the structure in ase format
+        # save the structure in a json format format
         atoms = self.inputs.structure.get_ase()
 
         with folder.open(self._input_aseatoms, 'w') as handle:
@@ -96,7 +100,8 @@ class AseCalculation(CalcJob):
                 raise InputValidationError("Don't have access to the optimizer name")
 
             # prepare the arguments to be passed to the optimizer class
-            optimizer_argsstr = "atoms, " + convert_the_args(optimizer.pop("args", []))
+            optimizer_argsstr = "atoms, logfile='%s', "%self.inputs.metadata.options.optimizer_stdout\
+                     + convert_the_args(optimizer.pop("args", []))
 
             # prepare the arguments to be passed to optimizer.run()
             optimizer_runargsstr = convert_the_args(optimizer.pop("run_args", []))
@@ -177,12 +182,6 @@ class AseCalculation(CalcJob):
 
         if optimizer is not None:
             all_imports.append(optimizer_import_string)
-
-        try:
-            if "PW" in calc_args['mode'].values():
-                all_imports.append("from gpaw import PW")
-        except KeyError:
-            pass
 
         extra_imports = parameters_dict.pop("extra_imports",[])
         for i in extra_imports:
@@ -307,6 +306,8 @@ class AseCalculation(CalcJob):
         calcinfo.retrieve_list = []
         calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
         calcinfo.retrieve_list.append(self._output_aseatoms)
+        if optimizer is not None:
+            calcinfo.retrieve_list.append(self._OPTIMIZER_FILE_NAME)
         calcinfo.retrieve_list += additional_retrieve_list
 
         # TODO: I should have two ways of running it: with gpaw-python in parallel

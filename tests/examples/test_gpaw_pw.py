@@ -40,16 +40,41 @@ def main():
     builder.kpoints = kpoints
 
     ### setup the parameters
-    parameters = {"calculator": {"name":"gpaw",
-                            "args":{"mode":{"@function":"PW",
-                                            "args":{"ecut":300}
-                            }}},
-            'atoms_getters':["temperature"],
-            'calculator_getters':[["potential_energy",{}]],
-            'optimizer':{'name':'QuasiNewton',
-                        'args':{},
-                        'run_args':{"fmax":0.05},
-                        }}
+    parameters = {
+                    "calculator": {\
+                                 "name":"gpaw",
+                                 "args":{\
+                                    "mode":{"@function":"PW",
+                                            "args":{"ecut":300}},
+                                    "convergence":{'energy':1e-9},
+                                    "occupations":{'name':'fermi-dirac', 'width':0.05}
+                                        },
+                                  },
+              'atoms_getters':["temperature",
+                               ["forces",{'apply_constraint':True}],
+                               ["masses",{}],
+                               ],
+              'calculator_getters':[["potential_energy",{}],
+                                    "spin_polarized",
+                                    ["stress",['atoms']],
+                                    ],
+              'optimizer':{'name':'QuasiNewton',
+                           "args": {'alpha':0.9},
+                           'run_args':{"fmax":0.05}
+                           },
+            
+              "pre_lines":["# This is a set",
+                           "# of various pre-lines",
+                           "from gpaw import PW"],
+            
+              "post_lines":["# This is a set",
+                           "# of various post-lines"],
+            
+              "extra_imports":["os",
+                               ["numpy","array"],
+                               ["numpy","array","ar"],
+                               ],
+              }
     builder.parameters = orm.Dict(dict=parameters)
     settings = {"CMDLINE":"python"}
     builder.settings = orm.Dict(dict=settings)
@@ -59,6 +84,7 @@ def main():
     # builder.description = 'BaTiO3 ASE test calculation witH GPAW as a calculator'
     builder.metadata.options.resources = {'num_machines':1}
     builder.metadata.options.max_wallclock_seconds = 60 * 60
+    builder.metadata.options.withmpi = True
     # builder.metadata.dry_run = True
     # builder.metadata.store_provenance = False
 
