@@ -1,4 +1,4 @@
-# `aiida-quantumespresso`
+# `aiida-ase`
 AiiDA plugin for ASE
 
 # Installation
@@ -23,10 +23,10 @@ The main goal of this plugin is to be a wrap around for ASE.
 To make it easy to setup the calculation generate a `builder` as follows
 
 ```
-    ## Use the CalculationFactory for ASE
-    ASECalculation = CalculationFactory('ase.ase')
-    ## get the builder
-    builder = ASECalculation.get_builder()
+## Use the CalculationFactory for ASE
+ASECalculation = CalculationFactory('ase.ase')
+## get the builder
+builder = ASECalculation.get_builder()
 ```
 
 The main parameters for the builder that need to be specified are:
@@ -90,6 +90,16 @@ Some addition utility functions are:
 1. `pre_lines`: list of lines to added to the start of the python file
 2. `post_lines`: list of lines to added to the end of the python file
 3. `extra_imports`: list of extra imports as separated strings, for example `["numpy", "array"]` will lead to `from numpy import array`
+
+# Note about choosing a code
+
+1. If using GPAW it is possible to run parallel calculations using `/path/to/execut/gpaw python run_gpaw.py`. Set up the code through AiiDA by adding in the `gpaw` executable. The add the `python` tag using the command line option
+```
+settings = {"CMDLINE":"python"}
+builder.settings = orm.Dict(dict=settings)
+```
+
+2. If the code you are interested in is present in this plugin registry it might make more sense to use that https://aiidateam.github.io/aiida-registry/
 
 
 # Documentation
