@@ -9,4 +9,3 @@ ASE parser plugin
 
 .. automodule:: aiida_ase.parsers.ase
    :members:
-

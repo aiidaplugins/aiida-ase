@@ -9,4 +9,3 @@ ASE plugin
 
 .. automodule:: aiida_ase.calculations.ase
    :members:
-
