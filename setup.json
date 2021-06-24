@@ -2,9 +2,15 @@
     "author": "The AiiDA team",
     "author_email": "developers@aiida.net",
     "classifiers": [
+        "Development Status :: 4 - Beta",
+        "Framework :: AiiDA",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 2.7",
-        "Development Status :: 4 - Beta"
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9"
     ],
     "description": "The official AiiDA plugin for ASE",
     "entry_points": {
@@ -15,21 +21,28 @@
             "ase.ase = aiida_ase.parsers.ase:AseParser"
         ]
     },
+    "python_requires": ">=3.6",
+    "install_requires": [
+        "aiida-core[atomic_tools]~=1.0"
+    ],
     "extras_require": {
-        "dev_precommit": [
-            "pre-commit"
-        ],
         "docs": [
-            "Sphinx",
             "docutils",
+            "sphinx",
             "sphinx_rtd_theme"
+        ],
+        "pre-commit": [
+            "pre-commit",
+            "pylint"
+        ],
+        "tests": [
+            "pgtest",
+            "pytest",
+            "pytest-regressions"
         ]
     },
-    "install_requires": [
-        "aiida-core>=0.10.0rc1"
-    ],
     "license": "MIT License",
-    "name": "aiida_ase",
+    "name": "aiida-ase",
     "url": "https://github.com/aiidateam/aiida-ase",
-    "version": "1.0.1"
+    "version": "2.0.0a1"
 }
