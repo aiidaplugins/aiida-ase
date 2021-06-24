@@ -21,15 +21,17 @@
             "ase.ase = aiida_ase.parsers.ase:AseParser"
         ]
     },
-    "python_requires": ">=3.6",
+    "python_requires": ">=3.7",
     "install_requires": [
         "aiida-core[atomic_tools]~=1.0"
     ],
     "extras_require": {
         "docs": [
-            "docutils",
             "sphinx",
-            "sphinx_rtd_theme"
+            "sphinx-autoapi",
+            "sphinx-book-theme",
+            "sphinx-click",
+            "sphinx-copybutton"
         ],
         "pre-commit": [
             "pre-commit",
@@ -43,6 +45,6 @@
     },
     "license": "MIT License",
     "name": "aiida-ase",
-    "url": "https://github.com/aiidateam/aiida-ase",
+    "url": "https://github.com/aiidaplugins/aiida-ase",
     "version": "2.0.0a1"
 }
