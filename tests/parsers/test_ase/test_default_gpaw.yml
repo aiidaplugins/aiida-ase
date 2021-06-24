@@ -1,0 +1,62 @@
+parameters:
+  total_energy: -21.867772543332897
+  warnings: []
+structure:
+  cell:
+  - - 4.0
+    - 0.0
+    - 0.0
+  - - 0.0
+    - 4.0
+    - 0.0
+  - - 0.0
+    - 0.0
+    - 4.0
+  kinds:
+  - mass: 137.327
+    name: Ba
+    symbols:
+    - Ba
+    weights:
+    - 1.0
+  - mass: 47.867
+    name: Ti
+    symbols:
+    - Ti
+    weights:
+    - 1.0
+  - mass: 15.9994
+    name: O
+    symbols:
+    - O
+    weights:
+    - 1.0
+  pbc1: true
+  pbc2: true
+  pbc3: true
+  sites:
+  - kind_name: Ba
+    position:
+    - 0.0
+    - 0.0
+    - 0.0
+  - kind_name: Ti
+    position:
+    - 2.0
+    - 2.0
+    - 2.0
+  - kind_name: O
+    position:
+    - 2.0
+    - 2.0
+    - 0.0
+  - kind_name: O
+    position:
+    - 2.0
+    - 0.0
+    - 2.0
+  - kind_name: O
+    position:
+    - 0.0
+    - 2.0
+    - 2.0
