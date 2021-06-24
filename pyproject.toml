@@ -1,0 +1,33 @@
+[build-system]
+requires = ['setuptools>=40.8.0', 'wheel',]
+build-backend = 'setuptools.build_meta'
+
+[tool.pylint.basic]
+good-names = ['pk']
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    'attribute-defined-outside-init',
+    'bad-continuation',
+    'duplicate-code',
+    'fixme',
+    'import-outside-toplevel',
+    'invalid-name',
+    'raise-missing-from',
+    'too-few-public-methods',
+    'too-many-ancestors',
+    'too-many-arguments',
+    'use-a-generator',
+]
+
+[tool.yapf]
+align_closing_bracket_with_visual_indent = true
+based_on_style = 'google'
+coalesce_brackets = true
+column_limit = 120
+dedent_closing_brackets = true
+indent_dictionary_value = false
+split_arguments_when_comma_terminated = true

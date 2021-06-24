@@ -26,60 +26,86 @@ settings = None
 #############################
 
 code = Code.get(codename)
-    
-alat = 4. # angstrom
-cell = [[alat, 0., 0.,],
-        [0., alat, 0.,],
-        [0., 0., alat,],
-        ]
+
+alat = 4.  # angstrom
+cell = [
+    [
+        alat,
+        0.,
+        0.,
+    ],
+    [
+        0.,
+        alat,
+        0.,
+    ],
+    [
+        0.,
+        0.,
+        alat,
+    ],
+]
 
 # a molecule of Ti and O
 s = StructureData(cell=cell)
-s.append_atom(position=(0.,0.,0.),symbols=['Ti'])
-s.append_atom(position=(1.4, 0., 0.),symbols=['O'])
+s.append_atom(position=(0., 0., 0.), symbols=['Ti'])
+s.append_atom(position=(1.4, 0., 0.), symbols=['O'])
 
 kpoints = KpointsData()
-kpoints.set_kpoints_mesh([2,2,2])
+kpoints.set_kpoints_mesh([2, 2, 2])
 
 parameters = ParameterData(
-    dict={"calculator": {"name":"gpaw",
-                         "args":{"mode":{"@function":"PW",
-                                         "args":{"ecut":300}
-                         }}},
-          'atoms_getters':["temperature",
-                           ["forces",{'apply_constraint':True}],
-                           ["masses",{}],
-                           ],
-          'calculator_getters':[["potential_energy",{}],
-                                "spin_polarized",
-                                ["stress",['atoms']],
-                                #["orbital_dos",['atoms', {'spin':0}] ],
-                                ],
-          'optimizer':{'name':'QuasiNewton',
-                       "args": {'alpha':0.9},
-                       'run_args':{"fmax":0.05}
-                       },
-          
-          "pre_lines":["# This is a set",
-                       "# of various pre-lines"],
-          
-          "post_lines":["# This is a set",
-                       "# of various post-lines"],
-          
-          "extra_imports":["os",
-                           ["numpy","array"],
-                           ["numpy","array","ar"],
-                           ],
-          }
-    )
+    dict={
+        'calculator': {
+            'name': 'gpaw',
+            'args': {
+                'mode': {
+                    '@function': 'PW',
+                    'args': {
+                        'ecut': 300
+                    }
+                }
+            }
+        },
+        'atoms_getters': [
+            'temperature',
+            ['forces', {
+                'apply_constraint': True
+            }],
+            ['masses', {}],
+        ],
+        'calculator_getters': [
+            ['potential_energy', {}],
+            'spin_polarized',
+            ['stress', ['atoms']],
+            #["orbital_dos",['atoms', {'spin':0}] ],
+        ],
+        'optimizer': {
+            'name': 'QuasiNewton',
+            'args': {
+                'alpha': 0.9
+            },
+            'run_args': {
+                'fmax': 0.05
+            }
+        },
+        'pre_lines': ['# This is a set', '# of various pre-lines'],
+        'post_lines': ['# This is a set', '# of various post-lines'],
+        'extra_imports': [
+            'os',
+            ['numpy', 'array'],
+            ['numpy', 'array', 'ar'],
+        ],
+    }
+)
 
-settings = ParameterData(dict={"ADDITIONAL_RETRIEVE_LIST":["an_extra_file.txt"]})
+settings = ParameterData(dict={'ADDITIONAL_RETRIEVE_LIST': ['an_extra_file.txt']})
 
 calc = code.new_calc()
-calc.label = "Test Gpaw"
-calc.description = "Test calculation with the Gpaw code"
-calc.set_max_wallclock_seconds(30*60) # 30 min
-calc.set_resources({"num_machines": 1,"num_mpiprocs_per_machine":1})
+calc.label = 'Test Gpaw'
+calc.description = 'Test calculation with the Gpaw code'
+calc.set_max_wallclock_seconds(30 * 60)  # 30 min
+calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
 calc.set_withmpi(False)
 
 calc.use_structure(s)
@@ -92,17 +118,10 @@ if queue is not None:
 
 if submit_test:
     subfolder, script_filename = calc.submit_test()
-    print "Test_submit for calculation (uuid='{}')".format(
-        calc.uuid)
-    print "Submit file in {}".format(os.path.join(
-            os.path.relpath(subfolder.abspath),
-            script_filename
-            ))
+    print "Test_submit for calculation (uuid='{}')".format(calc.uuid)
+    print 'Submit file in {}'.format(os.path.join(os.path.relpath(subfolder.abspath), script_filename))
 else:
     calc.store_all()
-    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid,calc.dbnode.pk)
+    print "created calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk)
     calc.submit()
-    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(
-        calc.uuid,calc.dbnode.pk)
-
+    print "submitted calculation; calc=Calculation(uuid='{}') # ID={}".format(calc.uuid, calc.dbnode.pk)

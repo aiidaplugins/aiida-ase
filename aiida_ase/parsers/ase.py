@@ -21,13 +21,13 @@ class AseParser(Parser):
     _outdict_name = 'output_parameters'
     _outstruc_name = 'output_structure'
 
-    def __init__(self,calculation):
+    def __init__(self, calculation):
         """
         Initialize the instance of AseParser
         """
         # check for valid input
-        if not isinstance(calculation,AseCalculation):
-            raise OutputParsingError("Input calculation must be a AseCalculation")
+        if not isinstance(calculation, AseCalculation):
+            raise OutputParsingError('Input calculation must be a AseCalculation')
         self._calc = calculation
 
     def parse_from_calc(self):
@@ -51,8 +51,7 @@ class AseParser(Parser):
         # check that calculation is in the right state
         state = self._calc.get_state()
         if state != calc_states.PARSING:
-            raise InvalidOperation("Calculation not in {} state"
-                                   .format(calc_states.PARSING) )
+            raise InvalidOperation(f'Calculation not in {calc_states.PARSING} state')
 
         # select the folder object
         out_folder = self._calc.get_retrieved_node()
@@ -63,51 +62,51 @@ class AseParser(Parser):
         # at least the stdout should exist
         if not self._calc._OUTPUT_FILE_NAME in list_of_files:
             successful = False
-            parserlogger.error("Standard output not found",extra=logger_extra)
-            return successful,()
+            parserlogger.error('Standard output not found', extra=logger_extra)
+            return successful, ()
 
         # output structure
         has_out_atoms = True if self._calc._output_aseatoms in list_of_files else False
         if has_out_atoms:
-            out_atoms = ase.io.read( out_folder.get_abs_path( self._calc._output_aseatoms ) )
+            out_atoms = ase.io.read(out_folder.get_abs_path(self._calc._output_aseatoms))
             out_structure = StructureData().set_ase(out_atoms)
 
         # load the results dictionary
-        json_outfile = out_folder.get_abs_path( self._calc._OUTPUT_FILE_NAME )
-        with open(json_outfile,'r') as f:
+        json_outfile = out_folder.get_abs_path(self._calc._OUTPUT_FILE_NAME)
+        with open(json_outfile, 'r') as f:
             json_params = json.load(f)
 
         # extract arrays from json_params
         dictionary_array = {}
-        for k,v in list(json_params.iteritems()):
-            if isinstance(v, (list,tuple)):
+        for k, v in list(json_params.iteritems()):
+            if isinstance(v, (list, tuple)):
                 dictionary_array[k] = json_params.pop(k)
 
         # look at warnings
         warnings = []
-        with open(out_folder.get_abs_path( self._calc._SCHED_ERROR_FILE )) as f:
+        with open(out_folder.get_abs_path(self._calc._SCHED_ERROR_FILE)) as f:
             errors = f.read()
         if errors:
             warnings = [errors]
         json_params['warnings'] = warnings
 
         # save the outputs
-        new_nodes_list= []
+        new_nodes_list = []
 
         # save the arrays
         if dictionary_array:
             array_data = ArrayData()
-            for k,v in dictionary_array.iteritems():
-                array_data.set_array(k,numpy.array(v))
-            new_nodes_list.append( (self._outarray_name, array_data) )
+            for k, v in dictionary_array.iteritems():
+                array_data.set_array(k, numpy.array(v))
+            new_nodes_list.append((self._outarray_name, array_data))
 
         # save the parameters
         if json_params:
-            parameter_data = ParameterData( dict=json_params )
-            new_nodes_list.append( (self._outdict_name, parameter_data) )
+            parameter_data = ParameterData(dict=json_params)
+            new_nodes_list.append((self._outdict_name, parameter_data))
 
         if has_out_atoms:
             structure_data = StructureData()
-            new_nodes_list.append( (self._outstruc_name, structure_data) )
+            new_nodes_list.append((self._outstruc_name, structure_data))
 
-        return successful,new_nodes_list
+        return successful, new_nodes_list
