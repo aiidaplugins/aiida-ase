@@ -28,7 +28,7 @@ repos:
         exclude: &exclude_files >
             (?x)^(
                 docs/.*|
-                tests/.*|
+                examples/.*|
             )$
 
 -   repo: https://github.com/PyCQA/pylint
