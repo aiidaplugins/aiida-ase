@@ -3,10 +3,16 @@ repos:
     rev: v4.0.1
     hooks:
     -   id: double-quote-string-fixer
+        exclude: &excludes >
+            (?x)^(
+                tests/.*(?<!\.py)$
+            )$
     -   id: end-of-file-fixer
+        exclude: *excludes
     -   id: fix-encoding-pragma
     -   id: mixed-line-ending
     -   id: trailing-whitespace
+        exclude: *excludes
 
 -   repo: https://github.com/ikamensh/flynt/
     rev: '0.63'
@@ -29,6 +35,7 @@ repos:
             (?x)^(
                 docs/.*|
                 examples/.*|
+                tests/.*(?<!\.py)$
             )$
 
 -   repo: https://github.com/PyCQA/pylint
