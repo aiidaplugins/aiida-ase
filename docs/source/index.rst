@@ -5,14 +5,13 @@
 .. figure:: images/AiiDA_transparent_logo.png
     :width: 250px
     :align: center
-    :height: 100px
 
 .. _AiiDA: http://www.aiida.net
 
 Description
 ===========
 
-The plugin is available at http://github.com/aiidateam/aiida-ase
+The plugin is available at http://github.com/aiidaplugins/aiida-ase
 
 `ASE`_ (Atomic Simulation Environment) is a set of tools and Python modules for
 setting up, manipulating, running, visualizing and analyzing atomistic
@@ -46,18 +45,11 @@ User's guide
    :maxdepth: 4
 
    user_guide/index
+   autoapi/index
 
-Modules provided with aiida-ase (API reference)
-++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. toctree::
-   :maxdepth: 4
-
-   module_guide/index
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
