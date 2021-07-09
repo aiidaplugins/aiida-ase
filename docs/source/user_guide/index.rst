@@ -6,4 +6,3 @@ User's guide
     :maxdepth: 3
 
     ase
-

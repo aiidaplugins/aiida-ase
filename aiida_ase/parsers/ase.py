@@ -11,6 +11,9 @@ from aiida.plugins import CalculationFactory
 
 AseCalculation = CalculationFactory('ase.ase')
 
+from aiida import parsers
+from aiida import plugins
+from ase.io import read
 
 class AseParser(Parser):
     """`Parser` implementation that can parse the output produced by an ASE calculator."""

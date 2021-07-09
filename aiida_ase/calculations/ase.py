@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """`CalcJob` implementation that can be used to wrap around the ASE calculators."""
-import six
-
-from aiida import get_file_header
+from aiida import common
+from aiida import engine
 from aiida import orm
-from aiida.common.datastructures import CalcInfo, CodeInfo
-from aiida.common.exceptions import InputValidationError
-from aiida.engine import CalcJob
+from aiida import plugins
+
+Dict = plugins.DataFactory('dict')
+StructureData = plugins.DataFactory('structure')
+KpointsData = plugins.DataFactory('array.kpoints')
 
 
-class AseCalculation(CalcJob):
+class AseCalculation(engine.CalcJob):
     """`CalcJob` implementation that can be used to wrap around the ASE calculators."""
 
     _default_parser = 'ase.ase'
@@ -118,7 +119,7 @@ class AseCalculation(CalcJob):
 
         read_calc_args = calculator.pop("args",[])
         if read_calc_args is None:
-            calc_argsstr = ""
+            calc_argsstr = ''
         else:
             # transform a in "a" if a is a string (needed for formatting)
             calc_args = {}
@@ -131,7 +132,7 @@ class AseCalculation(CalcJob):
 
             def return_a_function(v):
                 try:
-                    has_magic = "@function" in v.keys()
+                    has_magic = '@function' in v.keys()
                 except AttributeError:
                     has_magic = False
 
@@ -195,7 +196,7 @@ class AseCalculation(CalcJob):
                 elif len(i)==3:
                     all_imports.append("from {} import {} as {}".format(*i))
                 else:
-                    raise ValueError("format for extra imports not recognized")
+                    raise ValueError('format for extra imports not recognized')
             else:
                 raise ValueError("format for extra imports not recognized")
 
@@ -304,7 +305,7 @@ class AseCalculation(CalcJob):
 
         # Retrieve files
         calcinfo.retrieve_list = []
-        calcinfo.retrieve_list.append(self._OUTPUT_FILE_NAME)
+        calcinfo.retrieve_list.append(self.options.output_filename)
         calcinfo.retrieve_list.append(self._output_aseatoms)
         if optimizer is not None:
             calcinfo.retrieve_list.append(self._OPTIMIZER_FILE_NAME)
@@ -314,6 +315,7 @@ class AseCalculation(CalcJob):
         # and executing python if in serial
 
         return calcinfo
+
 
 def get_calculator_impstr(calculator_name):
     """
@@ -401,6 +403,7 @@ def convert_the_getters(getters):
         return_list.append( (method_name, out_args) )
     return return_list
 
+
 def convert_the_args(raw_args):
     """
     Function used to convert the arguments of methods
@@ -418,8 +421,8 @@ def convert_the_args(raw_args):
             elif isinstance(x,dict):
                 new_list.append( ", ".join([ "{}={}".format(k,v) for k,v in x.items() ]) )
             else:
-                raise ValueError("Error preparing the getters")
-        out_args = ", ".join(new_list)
+                raise ValueError('Error preparing the getters')
+        out_args = ', '.join(new_list)
     else:
         raise ValueError("Couldn't recognize list of getters")
     return out_args

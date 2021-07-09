@@ -18,10 +18,12 @@ ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 KpointsData = DataFactory('array.kpoints')
 
+# CUSTOMIZE HERE ############
 submit_test = True
-codename = 'your aiida code label for serial ase'
+codename = 'gpaw-serial'
 queue = None
 settings = None
+#############################
 
 code = Code.get(codename)
 
@@ -76,7 +78,7 @@ calc.label = 'Test Gpaw'
 calc.description = 'Test calculation with the Gpaw code'
 calc.set_max_wallclock_seconds(30 * 60)  # 30 min
 calc.set_resources({'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-calc.set_withmpi(False)
+#calc.set_withmpi(False)
 
 calc.use_structure(s)
 calc.use_parameters(parameters)

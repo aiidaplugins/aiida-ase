@@ -18,10 +18,12 @@ ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 KpointsData = DataFactory('array.kpoints')
 
-submit_test = True
-codename = 'your aiida code label for serial ase'
+# CUSTOMIZE HERE ############
+submit_test = False
+codename = 'gpaw-serial'
 queue = None
 settings = None
+#############################
 
 code = Code.get(codename)
 
@@ -44,13 +46,10 @@ cell = [
     ],
 ]
 
-# BaTiO3 cubic structure
+# a molecule of Ti and O
 s = StructureData(cell=cell)
-s.append_atom(position=(0., 0., 0.), symbols=['Ba'])
-s.append_atom(position=(alat / 2., alat / 2., alat / 2.), symbols=['Ti'])
-s.append_atom(position=(alat / 2., alat / 2., 0.), symbols=['O'])
-s.append_atom(position=(alat / 2., 0., alat / 2.), symbols=['O'])
-s.append_atom(position=(0., alat / 2., alat / 2.), symbols=['O'])
+s.append_atom(position=(0., 0., 0.), symbols=['Ti'])
+s.append_atom(position=(1.4, 0., 0.), symbols=['O'])
 
 kpoints = KpointsData()
 kpoints.set_kpoints_mesh([2, 2, 2])
@@ -68,8 +67,39 @@ parameters = ParameterData(
                 }
             }
         },
+        'atoms_getters': [
+            'temperature',
+            ['forces', {
+                'apply_constraint': True
+            }],
+            ['masses', {}],
+        ],
+        'calculator_getters': [
+            ['potential_energy', {}],
+            'spin_polarized',
+            ['stress', ['atoms']],
+            #["orbital_dos",['atoms', {'spin':0}] ],
+        ],
+        'optimizer': {
+            'name': 'QuasiNewton',
+            'args': {
+                'alpha': 0.9
+            },
+            'run_args': {
+                'fmax': 0.05
+            }
+        },
+        'pre_lines': ['# This is a set', '# of various pre-lines'],
+        'post_lines': ['# This is a set', '# of various post-lines'],
+        'extra_imports': [
+            'os',
+            ['numpy', 'array'],
+            ['numpy', 'array', 'ar'],
+        ],
     }
 )
+
+settings = ParameterData(dict={'ADDITIONAL_RETRIEVE_LIST': ['an_extra_file.txt']})
 
 calc = code.new_calc()
 calc.label = 'Test Gpaw'
@@ -81,6 +111,7 @@ calc.set_withmpi(False)
 calc.use_structure(s)
 calc.use_parameters(parameters)
 calc.use_kpoints(kpoints)
+calc.use_settings(settings)
 
 if queue is not None:
     calc.set_queue_name(queue)

@@ -18,10 +18,12 @@ ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 KpointsData = DataFactory('array.kpoints')
 
+# CUSTOMIZE HERE ############
 submit_test = True
-codename = 'your aiida code label for serial ase'
+codename = 'gpaw-serial'
 queue = None
 settings = None
+#############################
 
 code = Code.get(codename)
 
