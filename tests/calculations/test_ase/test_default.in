@@ -1,0 +1,34 @@
+import ase
+import ase.io
+import json
+import numpy
+from gpaw import GPAW as custom_calculator
+from ase.optimize import QuasiNewton as custom_optimizer
+from gpaw import PW
+
+atoms = ase.io.read('aiida_atoms.json')
+
+calculator = custom_calculator(mode=PW(ecut=300), kpts=(2,2,2))
+atoms.set_calculator(calculator)
+
+optimizer = custom_optimizer(atoms, alpha=0.9)
+optimizer.run(fmax=0.05)
+
+results = {}
+results['total_energy'] = atoms.get_total_energy()
+results['temperature'] = atoms.get_temperature()
+results['forces'] = atoms.get_forces(apply_constraint=True)
+results['masses'] = atoms.get_masses()
+
+results['potential_energy'] = calculator.get_potential_energy()
+results['spin_polarized'] = calculator.get_spin_polarized()
+results['stress'] = calculator.get_stress(atoms)
+
+for k,v in results.items():
+    if isinstance(results[k],(numpy.matrix,numpy.ndarray)):
+        results[k] = results[k].tolist()
+
+with open('results.json', 'w') as f:
+    json.dump(results,f)
+atoms.write('aiida_out_atoms.json')
+

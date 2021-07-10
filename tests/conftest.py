@@ -1,45 +1,59 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
-"""Initialise a text database and profile for pytest."""
-from __future__ import absolute_import
-
-import io
-import os
+"""Fixtures for the unit test suite."""
 import collections
+import re
+
 import pytest
-import six
 
-pytest_plugins = ['aiida.manage.tests.pytest_fixtures']
+from aiida import orm
 
-
-def flatten_inputs(inputs, prefix=''):
-    """This function follows roughly the same logic as `aiida.engine.processes.process::Process._flatten_inputs`."""
-    flat_inputs = []
-    for key, value in six.iteritems(inputs):
-        if isinstance(value, collections.Mapping):
-            flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
-        else:
-            flat_inputs.append((prefix + key, value))
-    return flat_inputs
+pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope='function')
-def fixture_sandbox_folder():
-    """Return a `SandboxFolder`."""
+def fixture_sandbox():
+    """Return a ``SandboxFolder``."""
     from aiida.common.folders import SandboxFolder
     with SandboxFolder() as folder:
         yield folder
 
 
 @pytest.fixture
-def generate_calc_job():
-    """Fixture to construct a new `CalcJob` instance and call `prepare_for_submission` for testing `CalcJob` classes.
+def fixture_localhost(aiida_localhost):
+    """Return a localhost ``Computer``."""
+    localhost = aiida_localhost
+    localhost.set_default_mpiprocs_per_machine(1)
+    return localhost
 
-    The fixture will return the `CalcInfo` returned by `prepare_for_submission` and the temporary folder that was
+
+@pytest.fixture
+def generate_parser():
+    """Fixture to load a parser class for testing parsers."""
+
+    def _generate_parser(entry_point_name):
+        """Fixture to load a parser class for testing parsers.
+
+        :param entry_point_name: entry point name of the parser class
+        :return: the `Parser` sub class
+        """
+        from aiida.plugins import ParserFactory
+        return ParserFactory(entry_point_name)
+
+    return _generate_parser
+
+
+@pytest.fixture
+def generate_calc_job():
+    """Fixture to construct a new ``CalcJob`` instance and call ``prepare_for_submission``.
+
+    The fixture will return the ``CalcInfo`` returned by ``prepare_for_submission`` and the temporary folder that was
     passed to it, into which the raw input files will have been written.
     """
 
     def _generate_calc_job(folder, entry_point_name, inputs=None):
-        """Fixture to generate a mock `CalcInfo` for testing calculation jobs."""
+        """Fixture to generate a mock ``CalcInfo`` for testing calculation jobs."""
         from aiida.engine.utils import instantiate_process
         from aiida.manage.manager import get_manager
         from aiida.plugins import CalculationFactory
@@ -61,6 +75,16 @@ def generate_calc_job():
 def generate_calc_job_node():
     """Fixture to generate a mock `CalcJobNode` for testing parsers."""
 
+    def flatten_inputs(inputs, prefix=''):
+        """This function follows roughly the same logic as `aiida.engine.processes.process::Process._flatten_inputs`."""
+        flat_inputs = []
+        for key, value in inputs.items():
+            if isinstance(value, collections.abc.Mapping):
+                flat_inputs.extend(flatten_inputs(value, prefix=prefix + key + '__'))
+            else:
+                flat_inputs.append((prefix + key, value))
+        return flat_inputs
+
     def _generate_calc_job_node(entry_point_name, computer, test_name=None, inputs=None, attributes=None):
         """Fixture to generate a mock `CalcJobNode` for testing parsers.
 
@@ -71,8 +95,8 @@ def generate_calc_job_node():
         :param attributes: any optional attributes to set on the node
         :return: `CalcJobNode` instance with an attached `FolderData` as the `retrieved` node
         """
+        # pylint: disable=too-many-locals
         import os
-        from aiida import orm
         from aiida.common import LinkType
         from aiida.plugins.entry_point import format_entry_point_string
 
@@ -86,6 +110,12 @@ def generate_calc_job_node():
             node.set_attribute_many(attributes)
 
         if inputs:
+            metadata = inputs.pop('metadata', {})
+            options = metadata.get('options', {})
+
+            for name, option in options.items():
+                node.set_option(name, option)
+
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
                 node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
@@ -111,50 +141,97 @@ def generate_calc_job_node():
 
 
 @pytest.fixture
-def aiida_local_code_factory():
-    """Return a `Code` instance configured to run calculations of given entry point on localhost `Computer`."""
+def generate_inputs_ase(generate_code, generate_structure, generate_kpoints_mesh):
+    """Generate inputs for an ``AseCalculation``."""
 
-    def _aiida_local_code_factory(entry_point_name, computer):
-        from aiida.orm import Code
-        plugin_name = entry_point_name
-        remote_computer_exec = [computer, '/bin/true']
-        return Code(input_plugin_name=plugin_name, remote_computer_exec=remote_computer_exec)
+    def _generate_inputs_ase():
+        parameters = {
+            'calculator': {
+                'name': 'gpaw',
+                'args': {
+                    'mode': {
+                        '@function': 'PW',
+                        'args': {
+                            'ecut': 300
+                        }
+                    }
+                }
+            },
+            'atoms_getters': [
+                'temperature',
+                ['forces', {
+                    'apply_constraint': True
+                }],
+                ['masses', {}],
+            ],
+            'calculator_getters': [
+                ['potential_energy', {}],
+                'spin_polarized',
+                ['stress', ['atoms']],
+            ],
+            'optimizer': {
+                'name': 'QuasiNewton',
+                'args': {
+                    'alpha': 0.9
+                },
+                'run_args': {
+                    'fmax': 0.05
+                }
+            },
+        }
+        inputs = {
+            'code': generate_code('ase.ase'),
+            'structure': generate_structure(),
+            'kpoints': generate_kpoints_mesh(2),
+            'parameters': orm.Dict(dict=parameters),
+            'metadata': {
+                'options': {
+                    'resources': {
+                        'num_machines': 1,
+                    }
+                }
+            }
+        }
+        return inputs
 
-    return _aiida_local_code_factory
+    return _generate_inputs_ase
 
 
 @pytest.fixture
-def generate_upf_data():
-    """Return a `UpfData` instance for the given element a file for which should exist in `tests/fixtures/pseudos`."""
+def generate_code(fixture_localhost):
+    """Return a ``Code`` instance configured to run calculations of given entry point on localhost ``Computer``."""
 
-    def _generate_upf_data(element):
-        """Return `UpfData` node."""
-        from aiida.orm import UpfData
+    def _generate_code(entry_point_name):
+        from aiida.common import exceptions
+        from aiida.orm import Code
 
-        filename = os.path.join('tests', 'fixtures', 'pseudos', '{}.upf'.format(element))
-        filepath = os.path.abspath(filename)
+        label = f'test.{entry_point_name}'
 
-        with io.open(filepath, 'r') as handle:
-            upf = UpfData(file=handle.name)
+        try:
+            return Code.objects.get(label=label)  # pylint: disable=no-member
+        except exceptions.NotExistent:
+            return Code(
+                label=label,
+                input_plugin_name=entry_point_name,
+                remote_computer_exec=[fixture_localhost, '/bin/true'],
+            )
 
-        return upf
-
-    return _generate_upf_data
+    return _generate_code
 
 
 @pytest.fixture
 def generate_structure():
-    """Return a `StructureData` representing bulk silicon."""
+    """Return a ``StructureData``."""
 
-    def _generate_structure(element='Si'):
-        """Return a `StructureData` representing bulk silicon."""
+    def _generate_structure(elements=('Ar',)):
+        """Return a ``StructureData``."""
         from aiida.orm import StructureData
 
-        a = 5.43
-        cell = [[a / 2., a / 2., 0], [a / 2., 0, a / 2.], [0, a / 2., a / 2.]]
-        structure = StructureData(cell=cell)
-        structure.append_atom(position=(0., 0., 0.), symbols=element)
-        structure.append_atom(position=(a / 4., a / 4., a / 4.), symbols=element)
+        structure = StructureData(cell=[[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+        for index, element in enumerate(elements):
+            symbol = re.sub(r'[0-9]+', '', element)
+            structure.append_atom(position=(index * 0.5, index * 0.5, index * 0.5), symbols=symbol, name=element)
 
         return structure
 
@@ -175,45 +252,3 @@ def generate_kpoints_mesh():
         return kpoints
 
     return _generate_kpoints_mesh
-
-
-@pytest.fixture
-def generate_parser():
-    """Fixture to load a parser class for testing parsers."""
-
-    def _generate_parser(entry_point_name):
-        """Fixture to load a parser class for testing parsers.
-
-        :param entry_point_name: entry point name of the parser class
-        :return: the `Parser` sub class
-        """
-        from aiida.plugins import ParserFactory
-        return ParserFactory(entry_point_name)
-
-    return _generate_parser
-
-
-@pytest.fixture
-def generate_remote_data():
-    """Return a `RemoteData` node."""
-
-    def _generate_remote_data(computer, remote_path, entry_point_name=None):
-        """Return a `KpointsData` with a mesh of npoints in each direction."""
-        from aiida.common.links import LinkType
-        from aiida.orm import CalcJobNode, RemoteData
-        from aiida.plugins.entry_point import format_entry_point_string
-
-        entry_point = format_entry_point_string('aiida.calculations', entry_point_name)
-
-        remote = RemoteData(remote_path=remote_path)
-        remote.computer = computer
-
-        if entry_point_name is not None:
-            creator = CalcJobNode(computer=computer, process_type=entry_point)
-            creator.set_option('resources', {'num_machines': 1, 'num_mpiprocs_per_machine': 1})
-            remote.add_incoming(creator, link_type=LinkType.CREATE, link_label='remote_folder')
-            creator.store()
-
-        return remote
-
-    return _generate_remote_data

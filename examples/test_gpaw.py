@@ -17,13 +17,49 @@ from aiida.common.exceptions import NotExistent
 ParameterData = DataFactory('parameter')
 StructureData = DataFactory('structure')
 KpointsData = DataFactory('array.kpoints')
+try:
+    dontsend = sys.argv[1]
+    if dontsend == '--dont-send':
+        submit_test = True
+    elif dontsend == '--send':
+        submit_test = False
+    else:
+        raise IndexError
+except IndexError:
+    print >> sys.stderr, ('The first parameter can only be either ' '--send or --dont-send')
+    sys.exit(1)
 
-submit_test = True
-codename = 'your aiida code label for serial ase'
+try:
+    codename = sys.argv[2]
+except IndexError:
+    codename = None
+
+expected_code_type = 'asecalculators.gpaw'
+
 queue = None
 settings = None
 
-code = Code.get(codename)
+try:
+    if codename is None:
+        raise ValueError
+    code = Code.get(codename)
+    if code.get_input_plugin_name() != expected_code_type:
+        raise ValueError
+except (NotExistent, ValueError):
+    valid_code_labels = [
+        c.label for c in Code.query(dbattributes__key='input_plugin', dbattributes__tval=expected_code_type)
+    ]
+    if valid_code_labels:
+        print >> sys.stderr, 'Pass as further parameter a valid code label.'
+        print >> sys.stderr, 'Valid labels with a {} executable are:'.format(expected_code_type)
+        for l in valid_code_labels:
+            print >> sys.stderr, '*', l
+    else:
+        print >> sys.stderr, 'Code not valid, and no valid codes for {}. Configure at least one first using'.format(
+            expected_code_type
+        )
+        print >> sys.stderr, '    verdi code setup'
+    sys.exit(1)
 
 alat = 4.  # angstrom
 cell = [
@@ -68,6 +104,15 @@ parameters = ParameterData(
                 }
             }
         },
+        'atoms_getters': ['temperature'],
+        'calculator_getters': [['potential_energy', {}]],
+        'optimizer': {
+            'name': 'QuasiNewton',
+            'args': {},
+            'run_args': {
+                'fmax': 0.05
+            },
+        }
     }
 )
 
