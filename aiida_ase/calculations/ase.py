@@ -19,6 +19,7 @@ class AseCalculation(engine.CalcJob):
     _TXT_OUTPUT_FILE_NAME = 'aiida.out'
     _input_aseatoms = 'aiida_atoms.json'
     _output_aseatoms = 'aiida_out_atoms.json'
+    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
 
     @classmethod
     def define(cls, spec):
@@ -36,6 +37,8 @@ class AseCalculation(engine.CalcJob):
         spec.input('kpoints', valid_type=KpointsData, required=False, help='The k-points to use for the calculation.')
         spec.input('parameters', valid_type=Dict, help='Input parameters for the namelists.')
         spec.input('settings', valid_type=Dict, required=False, help='Optional settings that control the plugin.')
+        spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
+            help='Optimiser filename for relaxation')
 
         spec.output('structure', valid_type=orm.StructureData, required=False)
         spec.output('parameters', valid_type=orm.Dict, required=False)
@@ -88,7 +91,9 @@ class AseCalculation(engine.CalcJob):
                 raise common.InputValidationError("Don't have access to the optimizer name")
 
             # prepare the arguments to be passed to the optimizer class
-            optimizer_argsstr = 'atoms, ' + convert_the_args(optimizer.pop('args', []))
+            # optimizer_argsstr = 'atoms, ' + convert_the_args(optimizer.pop('args', []))
+            optimizer_argsstr = f"atoms, logfile='{self.inputs.metadata.options.optimizer_stdout}', "\
+                     + convert_the_args(optimizer.pop('args', []))
 
             # prepare the arguments to be passed to optimizer.run()
             optimizer_runargsstr = convert_the_args(optimizer.pop('run_args', []))
