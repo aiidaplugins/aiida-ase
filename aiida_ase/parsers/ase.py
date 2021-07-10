@@ -1,58 +1,44 @@
 # -*- coding: utf-8 -*-
+"""Parser implementation for the ``AseCalculation``."""
 import json
 import numpy
-
-import ase.io
-
-from aiida import orm
-from aiida.common import exceptions
-from aiida.parsers import Parser
-from aiida.plugins import CalculationFactory
-
-AseCalculation = CalculationFactory('ase.ase')
 
 from aiida import parsers
 from aiida import plugins
 from ase.io import read
 
-class AseParser(Parser):
-    """`Parser` implementation that can parse the output produced by an ASE calculator."""
+Dict = plugins.DataFactory('dict')
+ArrayData = plugins.DataFactory('array')
+StructureData = plugins.DataFactory('structure')
+AseCalculation = plugins.CalculationFactory('ase.ase')
 
-    def __init__(self, node):
-        super(AseParser, self).__init__(node)
-        if not issubclass(node.process_class, AseCalculation):
-            raise exceptions.ParsingError(
-                'Node process class must be a {} but node<{}> has process class {}'.format(
-                    AseCalculation, node.uuid, node.process_class
-                )
-            )
 
-    def parse(self, **kwargs):
-        """Parse the contents of the output files retrieved in the `FolderData`."""
-        try:
-            output_folder = self.retrieved
-        except exceptions.NotExistent:
-            return self.exit_codes.ERROR_NO_RETRIEVED_FOLDER
+class AseParser(parsers.Parser):
+    """Parser implementation for the ``AseCalculation``."""
+
+    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements
+        """Parse the retrieved files from a ``AseCalculation``."""
+        retrieved = self.retrieved
 
         # check what is inside the folder
-        list_of_files = output_folder.list_object_names()
+        list_of_files = retrieved.list_object_names()
 
         # at least the stdout should exist
-        if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:
+        if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
             self.logger.error('Standard output not found')
             return self.exit_codes.ERROR_OUTPUT_FILES
 
-        if AseCalculation._output_aseatoms in list_of_files:
-            with output_folder.open(AseCalculation._output_aseatoms, 'r') as handle:
-                atoms = ase.io.read(handle, format='json')
-                structure = orm.StructureData()
-                structure.set_ase(atoms)
+        # output structure
+        if AseCalculation._output_aseatoms in list_of_files:  # pylint: disable=protected-access
+            with retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
+                atoms = read(handle, format='json')
+                structure = StructureData(ase=atoms)
                 self.out('structure', structure)
 
         filename_stdout = self.node.get_attribute('output_filename')
 
         # load the results dictionary
-        with output_folder.open(filename_stdout, 'r') as handle:
+        with retrieved.open(filename_stdout, 'r') as handle:
             json_params = json.load(handle)
 
         # extract arrays from json_params
@@ -63,19 +49,19 @@ class AseParser(Parser):
 
         # look at warnings
         warnings = []
-        with output_folder.open('_scheduler-stderr.txt', 'r') as handle:
+        with retrieved.open('_scheduler-stderr.txt', 'r') as handle:
             errors = handle.read()
         if errors:
             warnings = [errors]
         json_params['warnings'] = warnings
 
         if dictionary_array:
-            array_data = orm.ArrayData()
+            array_data = ArrayData()
             for k, v in dictionary_array.items():
                 array_data.set_array(k, numpy.array(v))
             self.out('array', array_data)
 
         if json_params:
-            self.out('parameters', orm.Dict(dict=json_params))
+            self.out('parameters', Dict(dict=json_params))
 
         return
