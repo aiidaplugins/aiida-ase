@@ -283,7 +283,7 @@ class AseCalculation(engine.CalcJob):
         calcinfo.remote_copy_list = remote_copy_list
 
         codeinfo = common.CodeInfo()
-        codeinfo.cmdline_params = [self._INPUT_FILE_NAME]
+        codeinfo.cmdline_params = [settings.pop('CMDLINE', []), self._INPUT_FILE_NAME]
         #calcinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._TXT_OUTPUT_FILE_NAME
         codeinfo.code_uuid = self.inputs.code.uuid
