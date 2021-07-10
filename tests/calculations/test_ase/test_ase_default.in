@@ -21,7 +21,7 @@ atoms = ase.io.read('aiida_atoms.json')
 calculator = custom_calculator(mode=PW(ecut=300), kpts=(2,2,2))
 atoms.set_calculator(calculator)
 
-optimizer = custom_optimizer(atoms, alpha=0.9)
+optimizer = custom_optimizer(atoms, logfile='aiida_optimizer.log', alpha=0.9)
 optimizer.run(fmax=0.05)
 
 results = {}
