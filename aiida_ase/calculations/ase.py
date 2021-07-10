@@ -175,7 +175,7 @@ class AseCalculation(engine.CalcJob):
         try:
             if 'PW' in calc_args['mode'].values():
                 all_imports.append('from gpaw import PW')
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
         extra_imports = parameters_dict.pop('extra_imports', [])
