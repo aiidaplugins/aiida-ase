@@ -171,7 +171,8 @@ def generate_inputs_ase(generate_code, generate_structure, generate_kpoints_mesh
             'optimizer': {
                 'name': 'QuasiNewton',
                 'args': {
-                    'alpha': 0.9
+                    'alpha': 0.9,
+                    'logfile': 'aiida_optimizer.log',
                 },
                 'run_args': {
                     'fmax': 0.05
