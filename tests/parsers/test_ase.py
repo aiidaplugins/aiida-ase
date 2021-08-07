@@ -22,10 +22,10 @@ def test_default_gpaw(aiida_localhost, generate_calc_job_node, generate_parser, 
 
     assert calcfunction.is_finished, calcfunction.exception
     assert calcfunction.is_finished_ok, calcfunction.exit_message
-    assert 'structure' in results
-    assert 'parameters' in results
+    assert 'output_structure' in results
+    assert 'output_parameters' in results
 
     data_regression.check({
-        'structure': results['structure'].attributes,
-        'parameters': results['parameters'].get_dict(),
+        'structure': results['output_structure'].attributes,
+        'parameters': results['output_parameters'].get_dict(),
     })
