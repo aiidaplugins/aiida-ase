@@ -20,6 +20,8 @@ class AseCalculation(engine.CalcJob):
     _input_aseatoms = 'aiida_atoms.json'
     _output_aseatoms = 'aiida_out_atoms.json'
     _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
+    _write_gpw_file = False
+    _GPW_FILE_NAME = 'aiida_gpw.gpw'
 
     @classmethod
     def define(cls, spec):
@@ -33,12 +35,16 @@ class AseCalculation(engine.CalcJob):
             help='Filename to which the content of stderr of the code that is to be run will be written.')
         spec.input('metadata.options.parser_name', valid_type=str, default=cls._default_parser,
             help='Define the parser to be used by setting its entry point name.')
+        spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
+            help='Optimiser filename for relaxation')
+        spec.input('metadata.options.gpw_filename', valid_type=str, default=cls._GPW_FILE_NAME,
+            help='Filename for .gpw file')
+        spec.input('metadata.options.write_gpw', valid_type=bool, default=cls._write_gpw_file,
+            help='Write the gpw file, useful for post processing')
         spec.input('structure', valid_type=StructureData, help='The input structure.')
         spec.input('kpoints', valid_type=KpointsData, required=False, help='The k-points to use for the calculation.')
         spec.input('parameters', valid_type=Dict, help='Input parameters for the namelists.')
         spec.input('settings', valid_type=Dict, required=False, help='Optional settings that control the plugin.')
-        spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
-            help='Optimiser filename for relaxation')
 
         spec.output('structure', valid_type=orm.StructureData, required=False)
         spec.output('parameters', valid_type=orm.Dict, required=False)
@@ -257,6 +263,11 @@ class AseCalculation(engine.CalcJob):
         # Dump trajectory if present
         if optimizer is not None:
             input_txt += f"atoms.write('{self._output_aseatoms}')\n"
+            input_txt += '\n'
+
+        # Write out gpw file if requested
+        if self.inputs.metadata.options.write_gpw:
+            input_txt += f"calculator.write('{self.inputs.metadata.options.gpw_filename}')\n"
             input_txt += '\n'
 
         # write all the input script to a file

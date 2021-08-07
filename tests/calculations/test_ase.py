@@ -20,3 +20,21 @@ def test_default(fixture_sandbox, generate_calc_job, generate_inputs_ase, file_r
 
     # Checks on the files written to the sandbox folder as raw input
     file_regression.check(input_written, encoding='utf-8', extension='.in')
+
+
+def test_gpw_file(fixture_sandbox, generate_calc_job, generate_inputs_ase, file_regression):
+    """Test if a gpw file is written out for a GPAW calculator."""
+    entry_point_name = 'ase.ase'
+    inputs = generate_inputs_ase()
+    inputs['metadata']['options']['write_gpw'] = True
+
+    calc_info = generate_calc_job(fixture_sandbox, entry_point_name, inputs)
+
+    assert isinstance(calc_info, datastructures.CalcInfo)
+    assert isinstance(calc_info.codes_info[0], datastructures.CodeInfo)
+
+    with fixture_sandbox.open(AseCalculation._INPUT_FILE_NAME) as handle:  # pylint: disable=protected-access
+        input_written = handle.read()
+
+    # Checks on the files written to the sandbox folder as raw input
+    file_regression.check(input_written, encoding='utf-8', extension='.in')

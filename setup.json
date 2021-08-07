@@ -19,6 +19,9 @@
         ],
         "aiida.parsers": [
             "ase.ase = aiida_ase.parsers.ase:AseParser"
+        ],
+        "aiida.workflows": [
+            "ase.gpaw.base = aiida_ase.workflows.base:BaseGPAWWorkChain"
         ]
     },
     "python_requires": ">=3.7",
