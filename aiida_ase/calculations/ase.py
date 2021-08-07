@@ -285,7 +285,8 @@ class AseCalculation(engine.CalcJob):
         cmdline_params = settings.pop('CMDLINE', [])
         if not isinstance(cmdline_params, (list, tuple)):
             cmdline_params = list(cmdline_params)
-        codeinfo.cmdline_params = cmdline_params.extend(self._INPUT_FILE_NAME)
+        cmdline_params.append(self._INPUT_FILE_NAME)
+        codeinfo.cmdline_params = cmdline_params
 
         #calcinfo.stdin_name = self._INPUT_FILE_NAME
         codeinfo.stdout_name = self._TXT_OUTPUT_FILE_NAME
