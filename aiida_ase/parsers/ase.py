@@ -65,3 +65,78 @@ class AseParser(parsers.Parser):
             self.out('parameters', Dict(dict=json_params))
 
         return
+
+
+class GPAWParser(parsers.Parser):
+    """Parser implementation for GPAW through an ``AseCalculation``."""
+
+    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements
+        """Parse the retrieved files from a ``AseCalculation``."""
+
+        # check what is inside the folder
+        list_of_files = self.retrieved.list_object_names()
+
+        # at least the stdout should exist
+        if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
+            self.logger.error('Standard output not found')
+            return self.exit_codes.ERROR_OUTPUT_FILES
+
+        # Output file will be needed for this parser
+        if AseCalculation._TXT_OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
+            self.logger.error('GPAW log file not found')
+            return self.exit_codes.ERROR_LOG_FILES
+
+        # output structure
+        if AseCalculation._output_aseatoms in list_of_files:  # pylint: disable=protected-access
+            with self.retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
+                atoms = read(handle, format='json')
+                structure = StructureData(ase=atoms)
+                self.out('output_structure', structure)
+
+        filename_stdout = self.node.get_attribute('output_filename')
+
+        # load the results dictionary
+        with self.retrieved.open(filename_stdout, 'r') as handle:
+            json_params = json.load(handle)
+
+        # get the relavent data from the log file
+        with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+            atoms_log = read(handle, format='gpaw-out')
+        create_output_parameters(atoms_log, json_params)
+
+        # look at warnings
+        with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:
+            errors = handle.read()
+        if errors:
+            json_params['warnings'] = [errors]
+
+        # extract arrays from json_params
+        dictionary_array = {}
+        for k, v in list(json_params.items()):
+            if isinstance(v, (list, tuple, numpy.ndarray)):
+                dictionary_array[k] = json_params.pop(k)
+
+        if dictionary_array:
+            array_data = ArrayData()
+            for k, v in dictionary_array.items():
+                array_data.set_array(k, numpy.array(v))
+            self.out('output_array', array_data)
+
+        if json_params:
+            self.out('output_parameters', Dict(dict=json_params))
+
+        return
+
+
+def create_output_parameters(atoms_log, json_params):
+    """Create the output parameters from the log file."""
+    results_calc = atoms_log.calc.results
+    json_params['energy'] = atoms_log.get_potential_energy()
+    json_params['energy_contributions'] = atoms_log.calc.energy_contributions
+    json_params['forces'] = atoms_log.get_forces()
+    json_params['stress'] = results_calc.pop('stress', None)
+    json_params['magmoms'] = results_calc.pop('magmoms', None)
+    json_params['dipole'] = results_calc.pop('dipole', None)
+    json_params['pbc'] = atoms_log.get_pbc()
+    json_params['fermi_energy'] = atoms_log.calc.eFermi
+    json_params['eigenvalues'] = atoms_log.calc.get_eigenvalues()

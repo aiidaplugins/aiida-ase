@@ -54,7 +54,7 @@ def runner():
     builder.gpaw.metadata.options.max_wallclock_seconds = 1 * 30 * 60
     builder.gpaw.metadata.options.withmpi = False
 
-    engine.submit(BaseGPAW, **builder)
+    engine.run(BaseGPAW, **builder)
 
 
 if __name__ == '__main__':

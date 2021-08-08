@@ -61,6 +61,7 @@ def main():
     builder.metadata.options.resources = {'num_machines': 1}
     builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = False
+    builder.metadata.options.parser_name = 'ase.gpaw'
 
     node = engine.submit(builder)
     print(f'AseCalculation<{node.pk}> submitted to the daemon.')

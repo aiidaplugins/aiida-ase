@@ -22,6 +22,7 @@ class AseCalculation(engine.CalcJob):
     _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
     _write_gpw_file = False
     _GPW_FILE_NAME = 'aiida_gpw.gpw'
+    _freq_gpw_write = 0
 
     @classmethod
     def define(cls, spec):
@@ -39,8 +40,12 @@ class AseCalculation(engine.CalcJob):
             help='Optimiser filename for relaxation')
         spec.input('metadata.options.gpw_filename', valid_type=str, default=cls._GPW_FILE_NAME,
             help='Filename for .gpw file')
+        spec.input('metadata.options.freq_gpw_write', valid_type=int, default=cls._freq_gpw_write,
+            help='Frequency to write the GPW file')
         spec.input('metadata.options.write_gpw', valid_type=bool, default=cls._write_gpw_file,
             help='Write the gpw file, useful for post processing')
+        spec.input('metadata.options.log_filename', valid_type=str, default=cls._TXT_OUTPUT_FILE_NAME,
+            help='Filename for the log file written out by the code')
         spec.input('structure', valid_type=StructureData, help='The input structure.')
         spec.input('kpoints', valid_type=KpointsData, required=False, help='The k-points to use for the calculation.')
         spec.input('parameters', valid_type=Dict, help='Input parameters for the namelists.')
@@ -51,6 +56,8 @@ class AseCalculation(engine.CalcJob):
         spec.output('array', valid_type=orm.ArrayData, required=False)
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES', message='One of the expected output files was missing.')
+        spec.exit_code(301, 'ERROR_LOG_FILES', message='The log file from the DFT code was not written out.')
+        spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 
     def prepare_for_submission(self, folder):
@@ -224,6 +231,24 @@ class AseCalculation(engine.CalcJob):
         input_txt += '\n'
 
         if optimizer is not None:
+            # check if the gpw file has been requested
+            if self.inputs.metadata.options.write_gpw:
+                # attach a class which tells the calculator
+                # when to write the gpw file
+                # (this is needed for the restart)
+                # Similar to https://wiki.fysik.dtu.dk/gpaw/documentation/manual.html#restarting-a-calculation
+                gpw_filename = self.metadata.options.gpw_filename
+                occasion = self.inputs.metadata.options.freq_gpw_write
+                if occasion > 0:
+                    input_txt += 'class WriteIntervals:\n'
+                    input_txt += '    def __init__(self, fname):\n'
+                    input_txt += '        self.fname = fname\n'
+                    input_txt += '        self.iter=0\n'
+                    input_txt += '    def write(self):\n'
+                    input_txt += '        calculator.write(self.fname)\n'
+                    input_txt += f'        self.iter += {occasion}\n'
+                    input_txt += f"calculator.attach(WriteIntervals('{gpw_filename}').write, {occasion})\n"
+
             # here block the trajectory file name: trajectory = 'aiida.traj'
             input_txt += f'optimizer = custom_optimizer({optimizer_argsstr})\n'
             input_txt += f'optimizer.run({optimizer_runargsstr})\n'
@@ -265,7 +290,7 @@ class AseCalculation(engine.CalcJob):
             input_txt += f"atoms.write('{self._output_aseatoms}')\n"
             input_txt += '\n'
 
-        # Write out gpw file if requested
+        # Write out the final gpw file if requested
         if self.inputs.metadata.options.write_gpw:
             input_txt += f"calculator.write('{self.inputs.metadata.options.gpw_filename}')\n"
             input_txt += '\n'
@@ -287,8 +312,6 @@ class AseCalculation(engine.CalcJob):
         calcinfo = common.CalcInfo()
 
         calcinfo.uuid = self.uuid
-        # Empty command line by default
-        # calcinfo.cmdline_params = settings.pop('CMDLINE', [])
         calcinfo.local_copy_list = local_copy_list
         calcinfo.remote_copy_list = remote_copy_list
 
@@ -299,8 +322,7 @@ class AseCalculation(engine.CalcJob):
         cmdline_params.append(self._INPUT_FILE_NAME)
         codeinfo.cmdline_params = cmdline_params
 
-        #calcinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._TXT_OUTPUT_FILE_NAME
+        codeinfo.stdout_name = self.inputs.metadata.options.log_filename
         codeinfo.code_uuid = self.inputs.code.uuid
         calcinfo.codes_info = [codeinfo]
 
@@ -308,13 +330,11 @@ class AseCalculation(engine.CalcJob):
         calcinfo.retrieve_list = []
         calcinfo.retrieve_list.append(self.options.output_filename)
         calcinfo.retrieve_list.append(self._output_aseatoms)
+        calcinfo.retrieve_list.append(self._TXT_OUTPUT_FILE_NAME)
         if optimizer is not None:
             calcinfo.retrieve_list.append(self._OPTIMIZER_FILE_NAME)
 
         calcinfo.retrieve_list += additional_retrieve_list
-
-        # TODO: I should have two ways of running it: with gpaw-python in parallel
-        # and executing python if in serial
 
         return calcinfo
 

@@ -18,7 +18,8 @@
             "ase.ase = aiida_ase.calculations.ase:AseCalculation"
         ],
         "aiida.parsers": [
-            "ase.ase = aiida_ase.parsers.ase:AseParser"
+            "ase.ase = aiida_ase.parsers.ase:AseParser",
+            "ase.gpaw = aiida_ase.parsers.ase:GPAWParser"
         ],
         "aiida.workflows": [
             "ase.gpaw.base = aiida_ase.workflows.base:BaseGPAWWorkChain"
