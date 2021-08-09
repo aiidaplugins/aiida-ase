@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 from aiida.orm import load_code
 from ase.build import bulk
 from aiida import orm, engine
@@ -55,7 +53,7 @@ def runner():
     builder.metadata.options.withmpi = False
 
 
-    engine.submit(AseCalculation, **builder)
+    engine.submit(builder)
 
 
 if __name__ == '__main__':

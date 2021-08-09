@@ -284,7 +284,7 @@ class AseCalculation(engine.CalcJob):
         codeinfo = common.CodeInfo()
         cmdline_params = settings.pop('CMDLINE', [])
         if not isinstance(cmdline_params, (list, tuple)):
-            cmdline_params = list(cmdline_params)
+            raise InputValidationError('the `CMDLINE` key in the `settings` input should be a list or tuple.')
         cmdline_params.append(self._INPUT_FILE_NAME)
         codeinfo.cmdline_params = cmdline_params
 
