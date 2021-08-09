@@ -51,7 +51,7 @@ def runner():
     builder.metadata.options.withmpi = False
 
 
-    engine.submit(AseCalculation, **builder)
+    engine.submit(builder)
 
 
 if __name__ == '__main__':
