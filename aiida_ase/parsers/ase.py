@@ -33,7 +33,7 @@ class AseParser(parsers.Parser):
             with retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
                 atoms = read(handle, format='json')
                 structure = StructureData(ase=atoms)
-                self.out('output_structure', structure)
+                self.out('structure', structure)
 
         filename_stdout = self.node.get_attribute('output_filename')
 
@@ -59,9 +59,9 @@ class AseParser(parsers.Parser):
             array_data = ArrayData()
             for k, v in dictionary_array.items():
                 array_data.set_array(k, numpy.array(v))
-            self.out('output_array', array_data)
+            self.out('array', array_data)
 
         if json_params:
-            self.out('output_parameters', Dict(dict=json_params))
+            self.out('parameters', Dict(dict=json_params))
 
         return

@@ -40,9 +40,9 @@ class AseCalculation(engine.CalcJob):
         spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
             help='Optimiser filename for relaxation')
 
-        spec.output('output_structure', valid_type=orm.StructureData, required=False)
-        spec.output('output_parameters', valid_type=orm.Dict, required=False)
-        spec.output('output_array', valid_type=orm.ArrayData, required=False)
+        spec.output('structure', valid_type=orm.StructureData, required=False)
+        spec.output('parameters', valid_type=orm.Dict, required=False)
+        spec.output('array', valid_type=orm.ArrayData, required=False)
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES', message='One of the expected output files was missing.')
         # yapf: enable
@@ -284,7 +284,7 @@ class AseCalculation(engine.CalcJob):
         codeinfo = common.CodeInfo()
         cmdline_params = settings.pop('CMDLINE', [])
         if not isinstance(cmdline_params, (list, tuple)):
-            raise InputValidationError('the `CMDLINE` key in the `settings` input should be a list or tuple.')
+            raise common.InputValidationError('the `CMDLINE` key in the `settings` input should be a list or tuple.')
         cmdline_params.append(self._INPUT_FILE_NAME)
         codeinfo.cmdline_params = cmdline_params
 
