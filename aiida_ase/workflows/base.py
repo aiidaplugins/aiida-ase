@@ -56,6 +56,7 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.metadata.options.write_gpw = True
             self.report(f'The .gpw file will be produce every {self.inputs.freq_gpw_write.value} times')
             self.ctx.inputs.metadata.options.freq_gpw_write = self.inputs.freq_gpw_write.value
+            self.ctx.inputs.metadata.options.parser_name = 'ase.gpaw'
 
     def prepare_process(self):
         """Prepare the calculation."""
