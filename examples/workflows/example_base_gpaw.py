@@ -10,10 +10,33 @@ def runner():
     BaseGPAW = WorkflowFactory('ase.gpaw.base')
     builder = BaseGPAW.get_builder()
 
-    # generate an example structure
-    atoms = bulk('Si', 'diamond', a=5.4)
+    alat = 4.  # angstrom
+    cell = [
+        [
+            alat,
+            0.,
+            0.,
+        ],
+        [
+            0.,
+            alat,
+            0.,
+        ],
+        [
+            0.,
+            0.,
+            alat,
+        ],
+    ]
+
+    # BaTiO3 cubic structure
     StructureData = DataFactory('structure')
-    structure = StructureData(ase=atoms)
+    structure = StructureData(cell=cell)
+    structure.append_atom(position=(0., 0., 0.), symbols=['Ba'])
+    structure.append_atom(position=(alat / 2., alat / 2., alat / 2.), symbols=['Ti'])
+    structure.append_atom(position=(alat / 2., alat / 2., 0.), symbols=['O'])
+    structure.append_atom(position=(alat / 2., 0., alat / 2.), symbols=['O'])
+    structure.append_atom(position=(0., alat / 2., alat / 2.), symbols=['O'])
     builder.structure = structure
 
     code = load_code('gpaw-21.6.0@localhost')
@@ -22,7 +45,7 @@ def runner():
     # k-point information
     KpointsData = DataFactory('array.kpoints')
     kpoints = KpointsData()
-    kpoints.set_kpoints_mesh([1,1,1])
+    kpoints.set_kpoints_mesh([2,2,2])
     builder.gpaw.kpoints = kpoints
 
     parameters = {
@@ -52,7 +75,6 @@ def runner():
 
     builder.gpaw.metadata.options.resources = {'num_machines': 1}
     builder.gpaw.metadata.options.max_wallclock_seconds = 1 * 30 * 60
-    builder.gpaw.metadata.options.withmpi = False
 
     engine.run(BaseGPAW, **builder)
 
