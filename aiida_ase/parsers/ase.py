@@ -83,7 +83,7 @@ class GPAWParser(parsers.Parser):
         # output json file
         if AseCalculation._OUTPUT_FILE_NAME in list_of_files:  # pylint: disable=protected-access
             # This calculation is likely to have been alright
-            self.logger.error('Output result file found')  # pylint: disable=protected-access
+            pass
         elif AseCalculation._TXT_OUTPUT_FILE_NAME in list_of_files:  # pylint: disable=protected-access
             # An output structure was not found but there is a txt file
             # Probably helpful for restarts

@@ -39,7 +39,7 @@ def runner():
     structure.append_atom(position=(0., alat / 2., alat / 2.), symbols=['O'])
     builder.structure = structure
 
-    code = load_code('gpaw-21.6.0@localhost')
+    code = load_code('gpaw.21.6.0@localhost')
     builder.gpaw.code = code
 
     # k-point information
