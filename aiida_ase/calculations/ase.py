@@ -15,11 +15,11 @@ class AseCalculation(engine.CalcJob):
 
     _default_parser = 'ase.ase'
     _INPUT_FILE_NAME = 'aiida_script.py'
-    _OUTPUT_FILE_NAME = 'results.json'
-    _TXT_OUTPUT_FILE_NAME = 'aiida.out'
-    _input_aseatoms = 'aiida_atoms.json'
-    _output_aseatoms = 'aiida_out_atoms.json'
-    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
+    _OUTPUT_FILE_NAME = 'results.json'  # Written at the very end
+    _TXT_OUTPUT_FILE_NAME = 'aiida.out'  # The log file of the calculation
+    _input_aseatoms = 'aiida_atoms.json'  # The input file written for an ASE calc
+    _output_aseatoms = 'aiida_out_atoms.json'  # For a relaxation, equivalent of qn.traj
+    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'  # stdout for optimiser
     _write_gpw_file = False
     _GPW_FILE_NAME = 'aiida_gpw.gpw'
     _freq_gpw_write = 0
@@ -58,8 +58,9 @@ class AseCalculation(engine.CalcJob):
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES', message='One of the expected output files was missing.')
         spec.exit_code(301, 'ERROR_LOG_FILES', message='The log file from the DFT code was not written out.')
-        spec.exit_code(302, 'ERROR_RELAX_NOT_COMPLETE', message='Relaxation did not complete')
-        spec.exit_code(303, 'ERROR_SCF_NOT_COMPLETE', message='SCF Failed')
+        spec.exit_code(302, 'ERROR_RELAX_NOT_COMPLETE', message='Relaxation did not complete.')
+        spec.exit_code(303, 'ERROR_SCF_NOT_COMPLETE', message='SCF Failed.')
+        spec.exit_code(305, 'ERROR_UNEXPECTED_EXCEPTION', message='Cannot identify what went wrong.')
         spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 

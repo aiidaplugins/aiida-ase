@@ -77,34 +77,20 @@ class GPAWParser(parsers.Parser):
         # check what is inside the folder
         list_of_files = self.retrieved.list_object_names()
 
-        # at least the stdout should exist
-        if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
-            self.logger.error('Standard output not found')
-            return self.exit_codes.ERROR_OUTPUT_FILES
+        # check if it was a relaxation
+        optimizer = self.node.inputs.parameters.get_dict().pop('optimizer', None)
 
-        # Output file will be needed for this parser
-        if AseCalculation._TXT_OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
-            self.logger.error('GPAW log file not found')
-            return self.exit_codes.ERROR_LOG_FILES
-
-        # output structure
-        if AseCalculation._output_aseatoms in list_of_files:  # pylint: disable=protected-access
-            # If we are here the calculation did complete sucessfully
-            with self.retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
-                atoms = read(handle, format='json')
-                self.out('structure', StructureData(ase=atoms))
-            # Store the trajectory as well
-            with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
-                all_ase_traj = read(handle, index=':', format='gpaw-out')
-            self.outputs.trajectory = store_to_trajectory_data(all_ase_traj)
-        else:
-            # An output structure was not found
-            self.logger.error('Output structure not found')
-            # check if it was a relaxation
-            optimizer = self.node.inputs.parameters.pop('optimizer', None)
+        # output json file
+        if AseCalculation._OUTPUT_FILE_NAME in list_of_files:  # pylint: disable=protected-access
+            # This calculation is likely to have been alright
+            self.logger.error('Output result file found')  # pylint: disable=protected-access
+        elif AseCalculation._TXT_OUTPUT_FILE_NAME in list_of_files:  # pylint: disable=protected-access
+            # An output structure was not found but there is a txt file
+            # Probably helpful for restarts
+            self.logger.error('Output results was not found, inspecting log file')
             if optimizer is not None:
                 # This is a relaxation calculation that did not complete
-                # try to get all the structures
+                # try to get all the structures that are available
                 try:
                     with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
                         all_ase_traj = read(handle, index=':', format='gpaw-out')
@@ -116,14 +102,26 @@ class GPAWParser(parsers.Parser):
                     self.logger.error('First relaxation step not completed')
                     return self.exit_codes.ERROR_SCF_NOT_COMPLETE
             else:
-                # This is an SCF that did not complete
-                self.logger.error('SCF not completed')
+                # This is an SCF calculation that did not complete
+                self.logger.error('SCF did not complete')
                 return self.exit_codes.ERROR_SCF_NOT_COMPLETE
+        else:
+            # Neither log file nor end result file were produced
+            # Likely to be bad news
+            return self.exit_codes.ERROR_UNEXPECTED_EXCEPTION
 
-        filename_stdout = self.node.get_attribute('output_filename')
-
+        # Check if output structure is needed
+        if optimizer is not None:
+            # If we are here the calculation did complete sucessfully
+            with self.retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
+                atoms = read(handle, format='json')
+                self.out('structure', StructureData(ase=atoms))
+            # Store the trajectory as well
+            with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+                all_ase_traj = read(handle, index=':', format='gpaw-out')
+            self.outputs.trajectory = store_to_trajectory_data(all_ase_traj)
         # load the results dictionary
-        with self.retrieved.open(filename_stdout, 'r') as handle:
+        with self.retrieved.open(AseCalculation._OUTPUT_FILE_NAME, 'r') as handle:  # pylint: disable=protected-access
             json_params = json.load(handle)
 
         # get the relavent data from the log file for the final structure
