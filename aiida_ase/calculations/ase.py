@@ -54,9 +54,12 @@ class AseCalculation(engine.CalcJob):
         spec.output('structure', valid_type=orm.StructureData, required=False)
         spec.output('parameters', valid_type=orm.Dict, required=False)
         spec.output('array', valid_type=orm.ArrayData, required=False)
+        spec.output('trajectory', valid_type=orm.TrajectoryData, required=False)
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES', message='One of the expected output files was missing.')
         spec.exit_code(301, 'ERROR_LOG_FILES', message='The log file from the DFT code was not written out.')
+        spec.exit_code(302, 'ERROR_RELAX_NOT_COMPLETE', message='Relaxation did not complete')
+        spec.exit_code(303, 'ERROR_SCF_NOT_COMPLETE', message='SCF Failed')
         spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 

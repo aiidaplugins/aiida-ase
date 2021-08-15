@@ -10,6 +10,7 @@ from ase.io import read
 Dict = plugins.DataFactory('dict')
 ArrayData = plugins.DataFactory('array')
 StructureData = plugins.DataFactory('structure')
+TrajectoryData = plugins.DataFactory('array.trajectory')
 AseCalculation = plugins.CalculationFactory('ase.ase')
 
 
@@ -70,7 +71,7 @@ class AseParser(parsers.Parser):
 class GPAWParser(parsers.Parser):
     """Parser implementation for GPAW through an ``AseCalculation``."""
 
-    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements
+    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals
         """Parse the retrieved files from a ``AseCalculation``."""
 
         # check what is inside the folder
@@ -88,10 +89,36 @@ class GPAWParser(parsers.Parser):
 
         # output structure
         if AseCalculation._output_aseatoms in list_of_files:  # pylint: disable=protected-access
+            # If we are here the calculation did complete sucessfully
             with self.retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
                 atoms = read(handle, format='json')
-                structure = StructureData(ase=atoms)
-                self.out('structure', structure)
+                self.out('structure', StructureData(ase=atoms))
+            # Store the trajectory as well
+            with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+                all_ase_traj = read(handle, index=':', format='gpaw-out')
+            self.outputs.trajectory = store_to_trajectory_data(all_ase_traj)
+        else:
+            # An output structure was not found
+            self.logger.error('Output structure not found')
+            # check if it was a relaxation
+            optimizer = self.node.inputs.parameters.pop('optimizer', None)
+            if optimizer is not None:
+                # This is a relaxation calculation that did not complete
+                # try to get all the structures
+                try:
+                    with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+                        all_ase_traj = read(handle, index=':', format='gpaw-out')
+                    trajectory = store_to_trajectory_data(all_ase_traj)
+                    self.outputs.trajectory = trajectory
+                    return self.exit_codes.ERROR_RELAX_NOT_COMPLETE
+                except Exception:  # pylint: disable=broad-except
+                    # Did not register the first relaxation step
+                    self.logger.error('First relaxation step not completed')
+                    return self.exit_codes.ERROR_SCF_NOT_COMPLETE
+            else:
+                # This is an SCF that did not complete
+                self.logger.error('SCF not completed')
+                return self.exit_codes.ERROR_SCF_NOT_COMPLETE
 
         filename_stdout = self.node.get_attribute('output_filename')
 
@@ -99,7 +126,7 @@ class GPAWParser(parsers.Parser):
         with self.retrieved.open(filename_stdout, 'r') as handle:
             json_params = json.load(handle)
 
-        # get the relavent data from the log file
+        # get the relavent data from the log file for the final structure
         with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
             atoms_log = read(handle, format='gpaw-out')
         create_output_parameters(atoms_log, json_params)
@@ -140,3 +167,12 @@ def create_output_parameters(atoms_log, json_params):
     json_params['pbc'] = atoms_log.get_pbc()
     json_params['fermi_energy'] = atoms_log.calc.eFermi
     json_params['eigenvalues'] = atoms_log.calc.get_eigenvalues()
+
+
+def store_to_trajectory_data(all_ase_traj):
+    """Store ase atoms object into a TrajectoryFile."""
+    all_aiida_atoms = []
+    for atoms in all_ase_traj:
+        structure = StructureData(ase=atoms)
+        all_aiida_atoms.append(structure)
+    return TrajectoryData(all_aiida_atoms)

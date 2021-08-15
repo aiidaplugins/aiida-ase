@@ -59,12 +59,20 @@ def main():
     builder.parameters = orm.Dict(dict=parameters)
     builder.settings = orm.Dict(dict=settings)
     builder.metadata.options.resources = {'num_machines': 1}
+<<<<<<< HEAD
     builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = False
     builder.metadata.options.parser_name = 'ase.gpaw'
 
     node = engine.submit(builder)
     print(f'AseCalculation<{node.pk}> submitted to the daemon.')
+=======
+    builder.metadata.options.max_wallclock_seconds = 1 * 30 * 60
+    builder.metadata.options.parser_name = 'ase.gpaw'
+
+
+    engine.run(builder)
+>>>>>>> b242e08... Added some error flags to the GPAW parser and store trajectory data if it is available
 
 
 if __name__ == '__main__':
