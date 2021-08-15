@@ -55,6 +55,22 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
     def validate_inputs(self):
         """Validate the inputs."""
         self.ctx.inputs.metadata.options.parser_name = 'ase.gpaw'
+        # Ask for the forces
+        parameters = self.ctx.inputs.parameters.get_dict()
+        parameters['atoms_getters'] = [['forces', {'apply_constraint': True}]]
+        self.ctx.inputs.parameters = orm.Dict(dict=parameters)
+
+        # Running the calculation using gpaw python
+        if 'settings' in self.ctx.inputs:
+            if 'CMDLINE' in self.ctx.inputs.settings.get_dict():
+                pass
+            else:
+                settings = self.ctx.inputs.settings.get_dict()
+                settings['CMDLINE'] = ['python']
+                self.ctx.inputs.settings = orm.Dict(dict=settings)
+        else:
+            settings = {'CMDLINE': ['python']}
+            self.ctx.inputs.settings = orm.Dict(dict=settings)
 
     def prepare_process(self):
         """Prepare the calculation."""
@@ -79,7 +95,7 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         nmaxold = self.defaults.nmaxold_default
         weight = self.defaults.weight_default
         parameters = self.ctx.inputs.parameters.get_dict()
-        parameters.set_default('calculation', {})['mixer'] = f'Mixer({new_mixer}, {nmaxold}, {weight})'
+        parameters.setdefault('calculation', {})['mixer'] = f'Mixer({new_mixer}, {nmaxold}, {weight})'
         parameters['extra_imports'] = ['gpaw', 'Mixer']
 
         self.ctx.inputs.parameters = orm.Dict(dict=parameters)
