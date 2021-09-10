@@ -27,9 +27,11 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
     def define(cls, spec):
         """Define the process specification."""
         super().define(spec)
-        spec.expose_inputs(AseCalculation, namespace='gpaw', exclude=['structure'])
+        spec.expose_inputs(AseCalculation, namespace='gpaw', exclude=['structure', 'kpoints'])
         spec.input('structure', valid_type=orm.StructureData, required=True,
                     help='The input structure.')
+        spec.input('kpoints', valid_type=orm.KpointsData, required=False,
+                    help='k-points to use for the calculation.')
 
         spec.expose_outputs(AseCalculation)
 
@@ -50,6 +52,11 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         """Set up the calculation."""
         super().setup()
         self.ctx.inputs = AttributeDict(self.inputs.gpaw)
+        # Store kpoints only if needed
+        try:
+            self.ctx.inputs.kpoints = self.inputs.kpoints
+        except AttributeError:
+            pass
         self.initial_calc = True
 
     def validate_inputs(self):
@@ -78,14 +85,25 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
             self.ctx.inputs.structure = self.inputs.structure
             self.initial_calc = False
 
+    def report_error_handled(self, calculation, action):
+        """Report an action taken for a calculation that has failed.
+        This should be called in a registered error handler if its condition is met and an action was taken.
+        CURRENTLY TAKEN FROM aiida-qe
+        :param calculation: the failed calculation node
+        :param action: a string message with the action taken
+        """
+        arguments = [calculation.process_label, calculation.pk, calculation.exit_status, calculation.exit_message]
+        self.report('{}<{}> failed with exit status {}: {}'.format(*arguments))
+        self.report(f'Action taken: {action}')
+
     @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_RELAX_NOT_COMPLETE])
     def handle_relax_not_complete(self, calculation):
         """Handle the relaxation not complete error."""
         try:
             self.ctx.inputs.structure = calculation.outputs.trajectory.get_step_structure()[-1]
-            self.report_error_handled('relaxation not complete; starting from final structure')
+            self.report_error_handled(calculation, 'relaxation not complete; starting from final structure')
         except exceptions.NotExistent:
-            self.report_error_handled('relaxation not complete; no structure found')
+            self.report_error_handled(calculation, 'relaxation not complete; no structure found')
         return ProcessHandlerReport(True)
 
     @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_SCF_NOT_COMPLETE])
@@ -99,11 +117,11 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         parameters['extra_imports'] = ['gpaw', 'Mixer']
 
         self.ctx.inputs.parameters = orm.Dict(dict=parameters)
-        self.report_error_handled('SCF not complete; starting from inital structure with lower mixing')
+        self.report_error_handled(calculation, 'SCF not complete; starting from inital structure with lower mixing')
         return ProcessHandlerReport(True)
 
     @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION])
     def handle_unexpected_exception(self, calculation):  # pylint: disable=unused-argument
         """Handle the unexpected exception error."""
-        self.report_error_handled('unexpected exception; starting from initial structure')
+        self.report_error_handled(calculation, 'unexpected exception; starting from initial structure')
         return ProcessHandlerReport(True, self.AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION)

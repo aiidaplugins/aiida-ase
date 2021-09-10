@@ -191,7 +191,7 @@ class AseCalculation(engine.CalcJob):
         try:
             if 'PW' in calc_args['mode'].values():
                 all_imports.append('from gpaw import PW')
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
         extra_imports = parameters_dict.pop('extra_imports', [])
@@ -268,13 +268,6 @@ class AseCalculation(engine.CalcJob):
             input_txt += f"results['{getter}'] = calculator.get_{getter}({getter_args})\n"
         input_txt += '\n'
 
-        # Convert to lists
-        input_txt += 'for k,v in results.items():\n'
-        input_txt += '    if isinstance(results[k],(numpy.matrix,numpy.ndarray)):\n'
-        input_txt += '        results[k] = results[k].tolist()\n'
-
-        input_txt += '\n'
-
         post_lines = parameters_dict.pop('post_lines', None)
         if post_lines is not None:
             if not isinstance(post_lines, (list, tuple)):
@@ -283,6 +276,12 @@ class AseCalculation(engine.CalcJob):
                 raise ValueError('Postlines must be a list of strings')
             input_txt += '\n'.join(post_lines) + '\n\n'
 
+        # Convert to lists
+        input_txt += 'for k,v in results.items():\n'
+        input_txt += '    if isinstance(results[k],(numpy.matrix,numpy.ndarray)):\n'
+        input_txt += '        results[k] = results[k].tolist()\n'
+
+        input_txt += '\n'
         # Dump results to file
         right_open = 'paropen' if self.options.withmpi else 'open'
         input_txt += f"with {right_open}('{self._OUTPUT_FILE_NAME}', 'w') as f:\n"
