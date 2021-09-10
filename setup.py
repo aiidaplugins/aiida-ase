@@ -15,10 +15,10 @@ def setup_package():
     filename_setup_json = 'setup.json'
     filename_description = 'README.md'
 
-    with open(filename_setup_json, 'r') as handle:
+    with open(filename_setup_json, 'r', encoding='utf-8', errors='ignore') as handle:
         setup_json = json.load(handle)
 
-    with open(filename_description, 'r') as handle:
+    with open(filename_description, 'r', encoding='utf-8', errors='ignore') as handle:
         description = handle.read()
 
     setup(
