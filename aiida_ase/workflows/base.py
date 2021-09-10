@@ -52,19 +52,14 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         """Set up the calculation."""
         super().setup()
         self.ctx.inputs = AttributeDict(self.inputs.gpaw)
-        # Store kpoints only if needed
-        try:
+        if 'kpoints' in self.inputs:
             self.ctx.inputs.kpoints = self.inputs.kpoints
-        except AttributeError:
-            pass
         self.initial_calc = True
 
     def validate_inputs(self):
         """Validate the inputs."""
         self.ctx.inputs.metadata.options.parser_name = 'ase.gpaw'
-        # Ask for the forces
         parameters = self.ctx.inputs.parameters.get_dict()
-        parameters['atoms_getters'] = [['forces', {'apply_constraint': True}]]
         self.ctx.inputs.parameters = orm.Dict(dict=parameters)
 
         # Running the calculation using gpaw python
@@ -86,11 +81,8 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
             self.initial_calc = False
 
     def report_error_handled(self, calculation, action):
-        """Report an action taken for a calculation that has failed.
-        This should be called in a registered error handler if its condition is met and an action was taken.
-        CURRENTLY TAKEN FROM aiida-qe
-        :param calculation: the failed calculation node
-        :param action: a string message with the action taken
+        """Report an error that has been handled.
+        Inspired by aiida-qe, report all the important quantities during the error handling process.
         """
         arguments = [calculation.process_label, calculation.pk, calculation.exit_status, calculation.exit_message]
         self.report('{}<{}> failed with exit status {}: {}'.format(*arguments))
@@ -113,8 +105,8 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         nmaxold = self.defaults.nmaxold_default
         weight = self.defaults.weight_default
         parameters = self.ctx.inputs.parameters.get_dict()
-        parameters.setdefault('calculation', {})['mixer'] = f'Mixer({new_mixer}, {nmaxold}, {weight})'
-        parameters['extra_imports'] = ['gpaw', 'Mixer']
+        parameters.setdefault('calculator', {})['mixer'] = f'Mixer({new_mixer}, {nmaxold}, {weight})'
+        parameters['extra_imports'] = [['gpaw', 'Mixer']]
 
         self.ctx.inputs.parameters = orm.Dict(dict=parameters)
         self.report_error_handled(calculation, 'SCF not complete; starting from inital structure with lower mixing')
@@ -125,3 +117,9 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         """Handle the unexpected exception error."""
         self.report_error_handled(calculation, 'unexpected exception; starting from initial structure')
         return ProcessHandlerReport(True, self.AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION)
+
+    @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND])
+    def handle_paw_not_found(self, calculation):  # pylint: disable=unused-argument
+        """Handle the paw not found error."""
+        self.report_error_handled(calculation, 'PAW not found; cancel the restart.')
+        return ProcessHandlerReport(True, self.AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND)

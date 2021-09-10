@@ -88,6 +88,14 @@ class GPAWParser(parsers.Parser):
             # An output structure was not found but there is a txt file
             # Probably helpful for restarts
             self.logger.error('Output results was not found, inspecting log file')
+            # Checking for possible errors common to all calculations
+            with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:
+                lines = handle.readlines()
+                is_paw_missing = check_paw_missing(lines)
+                if is_paw_missing:
+                    self.logger.error('Could not find paw potentials')
+                    return self.exit_codes.ERROR_PAW_NOT_FOUND
+
             if optimizer is not None:
                 # This is a relaxation calculation that did not complete
                 # try to get all the structures that are available
@@ -98,7 +106,7 @@ class GPAWParser(parsers.Parser):
                     self.outputs.trajectory = trajectory
                     return self.exit_codes.ERROR_RELAX_NOT_COMPLETE
                 except Exception:  # pylint: disable=broad-except
-                    # Did not register the first relaxation step
+                    # If it made it to here then the error is due to the SCF not completing
                     self.logger.error('First relaxation step not completed')
                     return self.exit_codes.ERROR_SCF_NOT_COMPLETE
             else:
@@ -151,6 +159,14 @@ class GPAWParser(parsers.Parser):
             self.out('parameters', Dict(dict=json_params))
 
         return
+
+
+def check_paw_missing(lines):
+    """Check if paw potentials are missing and that is the source of the error."""
+    for line in lines:
+        if 'Could not find required PAW dataset file' in line:
+            return True
+    return False
 
 
 def create_output_parameters(atoms_log, json_params):
