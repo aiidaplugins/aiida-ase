@@ -1,56 +1,66 @@
 # -*- coding: utf-8 -*-
-from aiida.orm import load_code
+"""Example script of how to perform an SCF GPAW calculation on crystalline silicon using AiiDA."""
+from aiida import common
+from aiida import engine
+from aiida import orm
+from aiida import plugins
 from ase.build import bulk
-from aiida import orm, engine
 
-def runner():
+# Change the following value to the ``Code`` that you have configured
+CODE_NAME = 'gpaw-21.6.0@localhost'
 
-    AseCalculation = CalculationFactory('ase.ase')
-    builder = AseCalculation.get_builder()
+Dict = plugins.DataFactory('dict')
+StructureData = plugins.DataFactory('structure')
+KpointsData = plugins.DataFactory('array.kpoints')
+AseCalculation = plugins.CalculationFactory('ase.ase')
 
-    code = load_code('gpaw-21.6.0@localhost')
-    builder.code = code
 
+def main():
     # generate an example structure
     atoms = bulk('Si', 'diamond', a=5.4)
     StructureData = DataFactory('structure')
     structure = StructureData(ase=atoms)
-    builder.structure = structure
 
     # k-point information
     KpointsData = DataFactory('array.kpoints')
     kpoints = KpointsData()
     kpoints.set_kpoints_mesh([1,1,1])
-    builder.kpoints = kpoints
 
     parameters = {
-    'calculator': {
-        'name': 'gpaw',
-        'args': {
-            'mode': {
-                '@function': 'PW',
-                'args': {'ecut': 300}},
-            'convergence': {'energy': 1e-9},
-            'occupations': {
-                'name': 'fermi-dirac',
-                'width':0.05}
-            },
-        },
+        'calculator': {
+            'name': 'gpaw',
+            'args': {
+                'mode': {
+                    '@function': 'PW',
+                    'args': {
+                        'ecut': 300
+                    }
+                },
+                'convergence': {'energy': 1e-9},
+                'occupations': {
+                    'name': 'fermi-dirac',
+                    'width': 0.05
+                }
+            }
+        }
     }
 
-    builder.parameters = orm.Dict(dict=parameters)
-
-    # Running the calculation using gpaw python
+    # Running the calculation using GPAW Python
     settings = {'CMDLINE': ['python']}
-    builder.settings = orm.Dict(dict=settings)
 
+    builder = AseCalculation.get_builder()
+    builder.code = load_code(CODE_NAME)
+    builder.structure = structure
+    builder.kpoints = kpoints
+    builder.parameters = orm.Dict(dict=parameters)
+    builder.settings = orm.Dict(dict=settings)
     builder.metadata.options.resources = {'num_machines': 1}
-    builder.metadata.options.max_wallclock_seconds = 1 * 30 * 60
+    builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = False
 
-
-    engine.submit(builder)
+    node = engine.submit(builder)
+    print(f'AseCalculation<{node.pk}> submitted to the daemon.')
 
 
 if __name__ == '__main__':
-    runner()
+    main()
