@@ -116,10 +116,10 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
     def handle_unexpected_exception(self, calculation):  # pylint: disable=unused-argument
         """Handle the unexpected exception error."""
         self.report_error_handled(calculation, 'unexpected exception; starting from initial structure')
-        return ProcessHandlerReport(True, self.AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION)
+        return ProcessHandlerReport(True, AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION)
 
     @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND])
     def handle_paw_not_found(self, calculation):  # pylint: disable=unused-argument
         """Handle the paw not found error."""
         self.report_error_handled(calculation, 'PAW not found; cancel the restart.')
-        return ProcessHandlerReport(True, self.AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND)
+        return ProcessHandlerReport(True, AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND)
