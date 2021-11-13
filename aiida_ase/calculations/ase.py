@@ -61,7 +61,8 @@ class AseCalculation(engine.CalcJob):
         spec.exit_code(302, 'ERROR_RELAX_NOT_COMPLETE', message='Relaxation did not complete.')
         spec.exit_code(303, 'ERROR_SCF_NOT_COMPLETE', message='SCF Failed.')
         spec.exit_code(305, 'ERROR_UNEXPECTED_EXCEPTION', message='Cannot identify what went wrong.')
-        spec.exit_code(306, 'ERROR_PAW_NOT_FOUND', message='gpaw could not find the PAW potentials')
+        spec.exit_code(306, 'ERROR_PAW_NOT_FOUND', message='gpaw could not find the PAW potentials.')
+        spec.exit_code(307, 'ERROR_ATTRIBUTE_ERROR', message='Attribute Error found in the stderr file.')
         spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 

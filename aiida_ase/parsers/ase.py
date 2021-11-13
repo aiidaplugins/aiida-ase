@@ -71,7 +71,7 @@ class AseParser(parsers.Parser):
 class GPAWParser(parsers.Parser):
     """Parser implementation for GPAW through an ``AseCalculation``."""
 
-    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals
+    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals,too-many-return-statements
         """Parse the retrieved files from a ``AseCalculation``."""
 
         # check what is inside the folder
@@ -91,10 +91,12 @@ class GPAWParser(parsers.Parser):
             # Checking for possible errors common to all calculations
             with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:
                 lines = handle.readlines()
-                is_paw_missing = check_paw_missing(lines)
-                if is_paw_missing:
+                if check_paw_missing(lines):
                     self.logger.error('Could not find paw potentials')
                     return self.exit_codes.ERROR_PAW_NOT_FOUND
+                if check_attribute_error(lines):
+                    self.logger.error('AttributeError in GPAW')
+                    return self.exit_codes.ERROR_ATTRIBUTE_ERROR
 
             if optimizer is not None:
                 # This is a relaxation calculation that did not complete
@@ -165,6 +167,14 @@ def check_paw_missing(lines):
     """Check if paw potentials are missing and that is the source of the error."""
     for line in lines:
         if 'Could not find required PAW dataset file' in line:
+            return True
+    return False
+
+
+def check_attribute_error(lines):
+    """Checks if there is an AssertionError printed out in the output file."""
+    for line in lines:
+        if 'AttributeError' in line:
             return True
     return False
 
