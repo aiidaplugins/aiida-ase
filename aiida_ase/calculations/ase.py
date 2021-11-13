@@ -155,13 +155,13 @@ class AseCalculation(engine.CalcJob):
                             the_v = v2
                         args_dict[k2] = the_v
 
-                    v2 = '{}({})'.format(
-                        v['@function'], ', '.join(['{}={}'.format(k_, v_) for k_, v_ in args_dict.items()])
+                    v2 = '{}({})'.format( # pylint: disable=consider-using-f-string
+                        v['@function'], ', '.join([f'{k_}={v_}' for k_, v_ in args_dict.items()]) # pylint: disable=consider-using-f-string
                     )
                     return v2
                 return v
 
-            tmp_list = ['{}={}'.format(k, return_a_function(v)) for k, v in calc_args.items()]
+            tmp_list = ['{}={}'.format(k, return_a_function(v)) for k, v in calc_args.items()]  # pylint: disable=consider-using-f-string
 
             calc_argsstr = ', '.join(tmp_list)
 
@@ -173,7 +173,7 @@ class AseCalculation(engine.CalcJob):
                     mesh = self.inputs.kpoints.get_kpoints_mesh()[0]
                 except AttributeError:
                     raise common.InputValidationError("Coudn't find a mesh of kpoints" ' in the KpointsData')
-                calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])
+                calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])  # pylint: disable=consider-using-f-string
 
         # =============== prepare the methods of atoms.get(), to save results
 
@@ -204,9 +204,9 @@ class AseCalculation(engine.CalcJob):
                 if not all([isinstance(j, str) for j in i]):
                     raise ValueError('extra import must contain strings')
                 if len(i) == 2:
-                    all_imports.append('from {} import {}'.format(*i))
+                    all_imports.append('from {} import {}'.format(*i))  # pylint: disable=consider-using-f-string
                 elif len(i) == 3:
-                    all_imports.append('from {} import {} as {}'.format(*i))
+                    all_imports.append('from {} import {} as {}'.format(*i))  # pylint: disable=consider-using-f-string
                 else:
                     raise ValueError('format for extra imports not recognized')
             else:
