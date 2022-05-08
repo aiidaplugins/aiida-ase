@@ -105,11 +105,15 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         nmaxold = self.defaults.nmaxold_default
         weight = self.defaults.weight_default
         parameters = self.ctx.inputs.parameters.get_dict()
-        parameters.setdefault('calculator', {})['mixer'] = f'Mixer({new_mixer}, {nmaxold}, {weight})'
+        mixer_dict = {'@function': 'Mixer', 'args': {'beta': new_mixer, 'nmaxold': nmaxold, 'weight': weight}}
+        parameters.setdefault('calculator', {}).setdefault('args', {})['mixer'] = mixer_dict
         parameters['extra_imports'] = [['gpaw', 'Mixer']]
+        parameters.setdefault('calculator', {}).setdefault('args', {})['maxiter'] = 1000
 
         self.ctx.inputs.parameters = orm.Dict(dict=parameters)
-        self.report_error_handled(calculation, 'SCF not complete; starting from inital structure with lower mixing')
+        self.report_error_handled(
+            calculation, 'SCF not complete; starting from inital structure with lower mixing and more iterations'
+        )
         return ProcessHandlerReport(True)
 
     @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_UNEXPECTED_EXCEPTION])
@@ -123,3 +127,14 @@ class BaseGPAWWorkChain(BaseRestartWorkChain):
         """Handle the paw not found error."""
         self.report_error_handled(calculation, 'PAW not found; cancel the restart.')
         return ProcessHandlerReport(True, AseCalculation.exit_codes.ERROR_PAW_NOT_FOUND)
+
+    @process_handler(exit_codes=[AseCalculation.exit_codes.ERROR_FERMI_LEVEL_INF])
+    def handle_fermi_level_inf(self, calculation):
+        """Handle the Fermi level is infinite error."""
+        parameters = self.ctx.inputs.parameters.get_dict()
+        parameters.setdefault('calculator', {}).setdefault('args', {})['nbands'] = -1
+        self.ctx.inputs.parameters = orm.Dict(dict=parameters)
+        self.report_error_handled(
+            calculation, 'Fermi level is infinite; starting from initial structure with nbands=-1'
+        )
+        return ProcessHandlerReport(True)

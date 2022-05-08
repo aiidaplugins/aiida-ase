@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Parser implementation for the ``AseCalculation``."""
 import json
+import math
 import numpy
 
 from aiida import parsers
@@ -71,7 +72,7 @@ class AseParser(parsers.Parser):
 class GPAWParser(parsers.Parser):
     """Parser implementation for GPAW through an ``AseCalculation``."""
 
-    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals,too-many-return-statements
+    def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals,too-many-return-statements,too-many-statements
         """Parse the retrieved files from a ``AseCalculation``."""
 
         # check what is inside the folder
@@ -138,6 +139,11 @@ class GPAWParser(parsers.Parser):
         with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
             atoms_log = read(handle, format='gpaw-out')
         create_output_parameters(atoms_log, json_params)
+
+        # Check that the parameters are not inf or nan
+        if math.isnan(json_params['fermi_energy']) or math.isinf(json_params['fermi_energy']):
+            self.logger.error('Fermi energy is inf or nan')
+            return self.exit_codes.ERROR_FERMI_LEVEL_INF
 
         # look at warnings
         with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:

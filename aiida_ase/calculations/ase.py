@@ -63,6 +63,7 @@ class AseCalculation(engine.CalcJob):
         spec.exit_code(305, 'ERROR_UNEXPECTED_EXCEPTION', message='Cannot identify what went wrong.')
         spec.exit_code(306, 'ERROR_PAW_NOT_FOUND', message='gpaw could not find the PAW potentials.')
         spec.exit_code(307, 'ERROR_ATTRIBUTE_ERROR', message='Attribute Error found in the stderr file.')
+        spec.exit_code(308, 'ERROR_FERMI_LEVEL_INF', message='Fermi level is infinite.')
         spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 
@@ -173,7 +174,15 @@ class AseCalculation(engine.CalcJob):
                     mesh = self.inputs.kpoints.get_kpoints_mesh()[0]
                 except AttributeError:
                     raise common.InputValidationError("Coudn't find a mesh of kpoints" ' in the KpointsData')
-                calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])  # pylint: disable=consider-using-f-string
+                if 'kpoints_options' in parameters_dict:
+                    kpts_argsstr = "kpts={'size':" + '({}, {}, {})'.format(*mesh)  # pylint: disable=consider-using-f-string
+                    for k, v in parameters_dict['kpoints_options'].items():
+                        kpts_argsstr += f", '{k}':{v}"
+                    kpts_argsstr += '}'
+                    parameters_dict.pop('kpoints_options')
+                    calc_argsstr = ', '.join([calc_argsstr] + [kpts_argsstr])
+                else:
+                    calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])  # pylint: disable=consider-using-f-string
 
         # =============== prepare the methods of atoms.get(), to save results
 
