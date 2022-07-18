@@ -173,7 +173,7 @@ class AseCalculation(engine.CalcJob):
                 try:
                     mesh = self.inputs.kpoints.get_kpoints_mesh()[0]
                 except AttributeError:
-                    raise common.InputValidationError("Coudn't find a mesh of kpoints" ' in the KpointsData')
+                    raise common.InputValidationError("Coudn't find a mesh of kpoints in the KpointsData")
                 if 'kpoints_options' in parameters_dict:
                     kpts_argsstr = "kpts={'size':" + '({}, {}, {})'.format(*mesh)  # pylint: disable=consider-using-f-string
                     for k, v in parameters_dict['kpoints_options'].items():
