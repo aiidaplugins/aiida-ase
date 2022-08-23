@@ -27,7 +27,7 @@
     },
     "python_requires": ">=3.7",
     "install_requires": [
-        "aiida-core[atomic_tools]==1.6.4"
+        "aiida-core[atomic_tools]==1.6"
     ],
     "extras_require": {
         "docs": [
