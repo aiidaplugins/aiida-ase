@@ -22,7 +22,7 @@
             "ase.gpaw = aiida_ase.parsers.ase:GPAWParser"
         ],
         "aiida.workflows": [
-            "ase.gpaw.base = aiida_ase.workflows.base:BaseGPAWWorkChain"
+            "ase.gpaw.base = aiida_ase.workflows.base:GpawBaseWorkChain"
         ]
     },
     "python_requires": ">=3.7",
