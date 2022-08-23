@@ -69,7 +69,7 @@ class AseParser(parsers.Parser):
         return
 
 
-class GPAWParser(parsers.Parser):
+class GpawParser(parsers.Parser):
     """Parser implementation for GPAW through an ``AseCalculation``."""
 
     def parse(self, **kwargs):  # pylint: disable=inconsistent-return-statements,too-many-branches,too-many-locals,too-many-return-statements,too-many-statements
