@@ -9,7 +9,7 @@ from aiida.common import AttributeDict, exceptions
 AseCalculation = CalculationFactory('ase.ase')  # pylint: disable=invalid-name
 
 
-class BaseGPAWWorkChain(BaseRestartWorkChain):
+class GpawBaseWorkChain(BaseRestartWorkChain):
     # yapf: disable
     """Workchain to run a GPAW calculation with automated error handling and restarts."""
 
