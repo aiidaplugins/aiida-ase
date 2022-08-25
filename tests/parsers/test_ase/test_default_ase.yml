@@ -1,15 +1,6 @@
 parameters:
-  energy: -21.867772
-  energy_contributions:
-    entropy (-st): -0.0
-    external: 0.0
-    kinetic: -58.892375
-    local: 0.374148
-    potential: 69.325865
-    xc: -32.67541
-  fermi_energy: 9.10829
-  stress: null
-  total_energy: -21.8677718609009
+  total_energy: -21.867772543332897
+  warnings: []
 structure:
   cell:
   - - 4.0
@@ -69,20 +60,3 @@ structure:
     - 0.0
     - 2.0
     - 2.0
-trajectory:
-  array|cells:
-  - 1
-  - 3
-  - 3
-  array|positions:
-  - 1
-  - 5
-  - 3
-  array|steps:
-  - 1
-  symbols:
-  - Ba
-  - Ti
-  - O
-  - O
-  - O

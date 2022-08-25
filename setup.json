@@ -18,12 +18,16 @@
             "ase.ase = aiida_ase.calculations.ase:AseCalculation"
         ],
         "aiida.parsers": [
-            "ase.ase = aiida_ase.parsers.ase:AseParser"
+            "ase.ase = aiida_ase.parsers.ase:AseParser",
+            "ase.gpaw = aiida_ase.parsers.ase:GpawParser"
+        ],
+        "aiida.workflows": [
+            "ase.gpaw.base = aiida_ase.workflows.base:GpawBaseWorkChain"
         ]
     },
     "python_requires": ">=3.7",
     "install_requires": [
-        "aiida-core[atomic_tools]~=1.0"
+        "aiida-core[atomic_tools]~=1.6"
     ],
     "extras_require": {
         "docs": [

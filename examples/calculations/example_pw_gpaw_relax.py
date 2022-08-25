@@ -16,15 +16,41 @@ AseCalculation = plugins.CalculationFactory('ase.ase')
 
 
 def main():
-    # generate an example structure
-    atoms = bulk('Si', 'diamond', a=5.4)
+    alat = 4.  # angstrom
+    cell = [
+        [
+            alat,
+            0.,
+            0.,
+        ],
+        [
+            0.,
+            alat,
+            0.,
+        ],
+        [
+            0.,
+            0.,
+            alat,
+        ],
+    ]
+
+    # BaTiO3 cubic structure
     StructureData = DataFactory('structure')
-    structure = StructureData(ase=atoms)
+    structure = StructureData(cell=cell)
+    structure.append_atom(position=(0., 0., 0.), symbols=['Ba'])
+    structure.append_atom(position=(alat / 2., alat / 2., alat / 2.), symbols=['Ti'])
+    structure.append_atom(position=(alat / 2., alat / 2., 0.), symbols=['O'])
+    structure.append_atom(position=(alat / 2., 0., alat / 2.), symbols=['O'])
+    structure.append_atom(position=(0., alat / 2., alat / 2.), symbols=['O'])
+
+    builder.structure = structure
 
     # k-point information
     KpointsData = DataFactory('array.kpoints')
     kpoints = KpointsData()
-    kpoints.set_kpoints_mesh([1,1,1])
+    kpoints.set_kpoints_mesh([2,2,2])
+    builder.kpoints = kpoints
 
     parameters = {
         'calculator': {
@@ -61,6 +87,7 @@ def main():
     builder.metadata.options.resources = {'num_machines': 1}
     builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = False
+    builder.metadata.options.parser_name = 'ase.gpaw'
 
     node = engine.submit(builder)
     print(f'AseCalculation<{node.pk}> submitted to the daemon.')

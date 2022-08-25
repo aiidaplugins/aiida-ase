@@ -15,11 +15,14 @@ class AseCalculation(engine.CalcJob):
 
     _default_parser = 'ase.ase'
     _INPUT_FILE_NAME = 'aiida_script.py'
-    _OUTPUT_FILE_NAME = 'results.json'
-    _TXT_OUTPUT_FILE_NAME = 'aiida.out'
-    _input_aseatoms = 'aiida_atoms.json'
-    _output_aseatoms = 'aiida_out_atoms.json'
-    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'
+    _OUTPUT_FILE_NAME = 'results.json'  # Written at the very end
+    _TXT_OUTPUT_FILE_NAME = 'aiida.out'  # The log file of the calculation
+    _input_aseatoms = 'aiida_atoms.json'  # The input file written for an ASE calc
+    _output_aseatoms = 'aiida_out_atoms.json'  # For a relaxation, equivalent of qn.traj
+    _OPTIMIZER_FILE_NAME = 'aiida_optimizer.log'  # stdout for optimiser
+    _write_gpw_file = False
+    _GPW_FILE_NAME = 'aiida_gpw.gpw'
+    _freq_gpw_write = 0
 
     @classmethod
     def define(cls, spec):
@@ -33,18 +36,35 @@ class AseCalculation(engine.CalcJob):
             help='Filename to which the content of stderr of the code that is to be run will be written.')
         spec.input('metadata.options.parser_name', valid_type=str, default=cls._default_parser,
             help='Define the parser to be used by setting its entry point name.')
+        spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
+            help='Optimiser filename for relaxation')
+        spec.input('metadata.options.gpw_filename', valid_type=str, default=cls._GPW_FILE_NAME,
+            help='Filename for .gpw file')
+        spec.input('metadata.options.freq_gpw_write', valid_type=int, default=cls._freq_gpw_write,
+            help='Frequency to write the GPW file')
+        spec.input('metadata.options.write_gpw', valid_type=bool, default=cls._write_gpw_file,
+            help='Write the gpw file, useful for post processing')
+        spec.input('metadata.options.log_filename', valid_type=str, default=cls._TXT_OUTPUT_FILE_NAME,
+            help='Filename for the log file written out by the code')
         spec.input('structure', valid_type=StructureData, help='The input structure.')
         spec.input('kpoints', valid_type=KpointsData, required=False, help='The k-points to use for the calculation.')
         spec.input('parameters', valid_type=Dict, help='Input parameters for the namelists.')
         spec.input('settings', valid_type=Dict, required=False, help='Optional settings that control the plugin.')
-        spec.input('metadata.options.optimizer_stdout', valid_type=str, default=cls._OPTIMIZER_FILE_NAME,
-            help='Optimiser filename for relaxation')
 
         spec.output('structure', valid_type=orm.StructureData, required=False)
         spec.output('parameters', valid_type=orm.Dict, required=False)
         spec.output('array', valid_type=orm.ArrayData, required=False)
+        spec.output('trajectory', valid_type=orm.TrajectoryData, required=False)
 
         spec.exit_code(300, 'ERROR_OUTPUT_FILES', message='One of the expected output files was missing.')
+        spec.exit_code(301, 'ERROR_LOG_FILES', message='The log file from the DFT code was not written out.')
+        spec.exit_code(302, 'ERROR_RELAX_NOT_COMPLETE', message='Relaxation did not complete.')
+        spec.exit_code(303, 'ERROR_SCF_NOT_COMPLETE', message='SCF Failed.')
+        spec.exit_code(305, 'ERROR_UNEXPECTED_EXCEPTION', message='Cannot identify what went wrong.')
+        spec.exit_code(306, 'ERROR_PAW_NOT_FOUND', message='gpaw could not find the PAW potentials.')
+        spec.exit_code(307, 'ERROR_ATTRIBUTE_ERROR', message='Attribute Error found in the stderr file.')
+        spec.exit_code(308, 'ERROR_FERMI_LEVEL_INF', message='Fermi level is infinite.')
+        spec.exit_code(400, 'ERROR_OUT_OF_WALLTIME', message='The calculation ran out of walltime.')
         # yapf: enable
 
     def prepare_for_submission(self, folder):
@@ -136,13 +156,13 @@ class AseCalculation(engine.CalcJob):
                             the_v = v2
                         args_dict[k2] = the_v
 
-                    v2 = '{}({})'.format(
-                        v['@function'], ', '.join(['{}={}'.format(k_, v_) for k_, v_ in args_dict.items()])
+                    v2 = '{}({})'.format( # pylint: disable=consider-using-f-string
+                        v['@function'], ', '.join([f'{k_}={v_}' for k_, v_ in args_dict.items()]) # pylint: disable=consider-using-f-string
                     )
                     return v2
                 return v
 
-            tmp_list = ['{}={}'.format(k, return_a_function(v)) for k, v in calc_args.items()]
+            tmp_list = ['{}={}'.format(k, return_a_function(v)) for k, v in calc_args.items()]  # pylint: disable=consider-using-f-string
 
             calc_argsstr = ', '.join(tmp_list)
 
@@ -153,8 +173,16 @@ class AseCalculation(engine.CalcJob):
                 try:
                     mesh = self.inputs.kpoints.get_kpoints_mesh()[0]
                 except AttributeError:
-                    raise common.InputValidationError("Coudn't find a mesh of kpoints" ' in the KpointsData')
-                calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])
+                    raise common.InputValidationError("Coudn't find a mesh of kpoints in the KpointsData")
+                if 'kpoints_options' in parameters_dict:
+                    kpts_argsstr = "kpts={'size':" + '({}, {}, {})'.format(*mesh)  # pylint: disable=consider-using-f-string
+                    for k, v in parameters_dict['kpoints_options'].items():
+                        kpts_argsstr += f", '{k}':{v}"
+                    kpts_argsstr += '}'
+                    parameters_dict.pop('kpoints_options')
+                    calc_argsstr = ', '.join([calc_argsstr] + [kpts_argsstr])
+                else:
+                    calc_argsstr = ', '.join([calc_argsstr] + ['kpts=({},{},{})'.format(*mesh)])  # pylint: disable=consider-using-f-string
 
         # =============== prepare the methods of atoms.get(), to save results
 
@@ -174,7 +202,7 @@ class AseCalculation(engine.CalcJob):
         try:
             if 'PW' in calc_args['mode'].values():
                 all_imports.append('from gpaw import PW')
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
         extra_imports = parameters_dict.pop('extra_imports', [])
@@ -185,9 +213,9 @@ class AseCalculation(engine.CalcJob):
                 if not all([isinstance(j, str) for j in i]):
                     raise ValueError('extra import must contain strings')
                 if len(i) == 2:
-                    all_imports.append('from {} import {}'.format(*i))
+                    all_imports.append('from {} import {}'.format(*i))  # pylint: disable=consider-using-f-string
                 elif len(i) == 3:
-                    all_imports.append('from {} import {} as {}'.format(*i))
+                    all_imports.append('from {} import {} as {}'.format(*i))  # pylint: disable=consider-using-f-string
                 else:
                     raise ValueError('format for extra imports not recognized')
             else:
@@ -218,6 +246,24 @@ class AseCalculation(engine.CalcJob):
         input_txt += '\n'
 
         if optimizer is not None:
+            # check if the gpw file has been requested
+            if self.inputs.metadata.options.write_gpw:
+                # attach a class which tells the calculator
+                # when to write the gpw file
+                # (this is needed for the restart)
+                # Similar to https://wiki.fysik.dtu.dk/gpaw/documentation/manual.html#restarting-a-calculation
+                gpw_filename = self.metadata.options.gpw_filename
+                occasion = self.inputs.metadata.options.freq_gpw_write
+                if occasion > 0:
+                    input_txt += 'class WriteIntervals:\n'
+                    input_txt += '    def __init__(self, fname):\n'
+                    input_txt += '        self.fname = fname\n'
+                    input_txt += '        self.iter=0\n'
+                    input_txt += '    def write(self):\n'
+                    input_txt += '        calculator.write(self.fname)\n'
+                    input_txt += f'        self.iter += {occasion}\n'
+                    input_txt += f"calculator.attach(WriteIntervals('{gpw_filename}').write, {occasion})\n"
+
             # here block the trajectory file name: trajectory = 'aiida.traj'
             input_txt += f'optimizer = custom_optimizer({optimizer_argsstr})\n'
             input_txt += f'optimizer.run({optimizer_runargsstr})\n'
@@ -233,13 +279,6 @@ class AseCalculation(engine.CalcJob):
             input_txt += f"results['{getter}'] = calculator.get_{getter}({getter_args})\n"
         input_txt += '\n'
 
-        # Convert to lists
-        input_txt += 'for k,v in results.items():\n'
-        input_txt += '    if isinstance(results[k],(numpy.matrix,numpy.ndarray)):\n'
-        input_txt += '        results[k] = results[k].tolist()\n'
-
-        input_txt += '\n'
-
         post_lines = parameters_dict.pop('post_lines', None)
         if post_lines is not None:
             if not isinstance(post_lines, (list, tuple)):
@@ -248,6 +287,12 @@ class AseCalculation(engine.CalcJob):
                 raise ValueError('Postlines must be a list of strings')
             input_txt += '\n'.join(post_lines) + '\n\n'
 
+        # Convert to lists
+        input_txt += 'for k,v in results.items():\n'
+        input_txt += '    if isinstance(results[k],(numpy.matrix,numpy.ndarray)):\n'
+        input_txt += '        results[k] = results[k].tolist()\n'
+
+        input_txt += '\n'
         # Dump results to file
         right_open = 'paropen' if self.options.withmpi else 'open'
         input_txt += f"with {right_open}('{self._OUTPUT_FILE_NAME}', 'w') as f:\n"
@@ -257,6 +302,11 @@ class AseCalculation(engine.CalcJob):
         # Dump trajectory if present
         if optimizer is not None:
             input_txt += f"atoms.write('{self._output_aseatoms}')\n"
+            input_txt += '\n'
+
+        # Write out the final gpw file if requested
+        if self.inputs.metadata.options.write_gpw:
+            input_txt += f"calculator.write('{self.inputs.metadata.options.gpw_filename}')\n"
             input_txt += '\n'
 
         # write all the input script to a file
@@ -276,8 +326,6 @@ class AseCalculation(engine.CalcJob):
         calcinfo = common.CalcInfo()
 
         calcinfo.uuid = self.uuid
-        # Empty command line by default
-        # calcinfo.cmdline_params = settings.pop('CMDLINE', [])
         calcinfo.local_copy_list = local_copy_list
         calcinfo.remote_copy_list = remote_copy_list
 
@@ -288,8 +336,7 @@ class AseCalculation(engine.CalcJob):
         cmdline_params.append(self._INPUT_FILE_NAME)
         codeinfo.cmdline_params = cmdline_params
 
-        #calcinfo.stdin_name = self._INPUT_FILE_NAME
-        codeinfo.stdout_name = self._TXT_OUTPUT_FILE_NAME
+        codeinfo.stdout_name = self.inputs.metadata.options.log_filename
         codeinfo.code_uuid = self.inputs.code.uuid
         calcinfo.codes_info = [codeinfo]
 
@@ -297,13 +344,11 @@ class AseCalculation(engine.CalcJob):
         calcinfo.retrieve_list = []
         calcinfo.retrieve_list.append(self.options.output_filename)
         calcinfo.retrieve_list.append(self._output_aseatoms)
+        calcinfo.retrieve_list.append(self._TXT_OUTPUT_FILE_NAME)
         if optimizer is not None:
             calcinfo.retrieve_list.append(self._OPTIMIZER_FILE_NAME)
 
         calcinfo.retrieve_list += additional_retrieve_list
-
-        # TODO: I should have two ways of running it: with gpaw-python in parallel
-        # and executing python if in serial
 
         return calcinfo
 
