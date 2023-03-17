@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from aiida import engine, orm
 from aiida.orm import load_code
 from ase.build import bulk
-from aiida import orm, engine
+
 
 def runner():
 

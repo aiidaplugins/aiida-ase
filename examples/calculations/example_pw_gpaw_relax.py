@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """Example script of how to perform a relax GPAW calculation on crystalline silicon using AiiDA."""
-from aiida import common
-from aiida import engine
-from aiida import orm
-from aiida import plugins
+from aiida import common, engine, orm, plugins
 from ase.build import bulk
 
 # Change the following value to the ``Code`` that you have configured
