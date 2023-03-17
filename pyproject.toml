@@ -1,6 +1,86 @@
 [build-system]
-requires = ['setuptools>=40.8.0', 'wheel',]
-build-backend = 'setuptools.build_meta'
+requires = ['flit_core>=3.4,<4']
+build-backend = 'flit_core.buildapi'
+
+[project]
+name = 'aiida-ase'
+dynamic = ['description', 'version']
+authors = [
+    {name = 'The AiiDA team', email = 'developers@aiida.net'}
+]
+readme = 'README.md'
+license = {file = 'LICENSE.txt'}
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Framework :: AiiDA',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Topic :: Scientific/Engineering'
+]
+keywords = ['aiida', 'workflows', 'ase']
+requires-python = '>=3.7'
+dependencies = [
+    'aiida-core~=1.6',
+    'ase',
+]
+
+[project.urls]
+Source = 'https://github.com/aiidaplugins/aiida-ase'
+
+[project.optional-dependencies]
+docs = [
+    'sphinx',
+    'sphinx-autoapi',
+    'sphinx-book-theme',
+    'sphinx-click',
+    'sphinx-copybutton'
+]
+pre-commit = [
+    'pre-commit',
+    'pylint',
+]
+tests = [
+    'pgtest',
+    'pytest',
+    'pytest-regressions',
+]
+
+[project.entry-points.'aiida.calculations']
+'ase.ase' = 'aiida_ase.calculations.ase:AseCalculation'
+
+[project.entry-points.'aiida.parsers']
+'ase.ase' = 'aiida_ase.parsers.ase:AseParser'
+'ase.gpaw' = 'aiida_ase.parsers.ase:GpawParser'
+
+[project.entry-points.'aiida.workflows']
+'ase.gpaw.base' = 'aiida_ase.workflows.base:GpawBaseWorkChain'
+
+[tool.flit.module]
+name = 'aiida_ase'
+
+[tool.flit.sdist]
+exclude = [
+    '.github/',
+    'docs/',
+    'tests/',
+    '.gitignore',
+    '.pre-commit-config.yaml',
+    '.readthedocs.yml',
+]
+
+[tool.flynt]
+line-length = 120
+fail-on-change = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    'ignore:Creating AiiDA configuration folder.*:UserWarning'
+]
 
 [tool.pylint.basic]
 good-names = ['pk']
