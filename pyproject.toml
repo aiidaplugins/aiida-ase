@@ -56,7 +56,7 @@ tests = [
 
 [project.entry-points.'aiida.parsers']
 'ase.ase' = 'aiida_ase.parsers.ase:AseParser'
-'ase.gpaw' = 'aiida_ase.parsers.ase:GpawParser'
+'ase.gpaw' = 'aiida_ase.parsers.gpaw:GpawParser'
 
 [project.entry-points.'aiida.workflows']
 'ase.gpaw.base' = 'aiida_ase.workflows.base:GpawBaseWorkChain'
