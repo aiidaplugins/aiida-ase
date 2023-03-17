@@ -4,9 +4,8 @@
 import collections
 import re
 
-import pytest
-
 from aiida import orm
+import pytest
 
 pytest_plugins = ['aiida.manage.tests.pytest_fixtures']  # pylint: disable=invalid-name
 
@@ -96,6 +95,7 @@ def generate_calc_job_node():
         """
         # pylint: disable=too-many-locals
         import os
+
         from aiida.common import LinkType
         from aiida.plugins.entry_point import format_entry_point_string
 

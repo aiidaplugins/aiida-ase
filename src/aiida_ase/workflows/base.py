@@ -2,9 +2,9 @@
 """Workchain to run a GPAW calculation with automated error handling and restarts."""
 
 from aiida import orm
-from aiida.engine import while_, BaseRestartWorkChain, process_handler, ProcessHandlerReport
-from aiida.plugins import CalculationFactory
 from aiida.common import AttributeDict, exceptions
+from aiida.engine import BaseRestartWorkChain, ProcessHandlerReport, process_handler, while_
+from aiida.plugins import CalculationFactory
 
 AseCalculation = CalculationFactory('ase.ase')  # pylint: disable=invalid-name
 

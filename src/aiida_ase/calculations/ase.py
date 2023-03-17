@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """`CalcJob` implementation that can be used to wrap around the ASE calculators."""
-from aiida import common
-from aiida import engine
-from aiida import orm
-from aiida import plugins
+from aiida import common, engine, orm, plugins
 
 Dict = plugins.DataFactory('dict')
 StructureData = plugins.DataFactory('structure')

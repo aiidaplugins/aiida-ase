@@ -2,11 +2,10 @@
 """Parser implementation for the ``AseCalculation``."""
 import json
 import math
-import numpy
 
-from aiida import parsers
-from aiida import plugins
+from aiida import parsers, plugins
 from ase.io import read
+import numpy
 
 Dict = plugins.DataFactory('dict')
 ArrayData = plugins.DataFactory('array')
