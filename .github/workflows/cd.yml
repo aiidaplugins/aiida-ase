@@ -32,15 +32,7 @@ jobs:
         steps:
         -   uses: actions/checkout@v2
 
-        -   name: Cache Python dependencies
-            uses: actions/cache@v1
-            with:
-                path: ~/.cache/pip
-                key: pip-pre-commit-${{ hashFiles('**/setup.json') }}
-                restore-keys:
-                    pip-pre-commit-
-
-        -   name: Install Python
+        -   name: Install Python 3.10
             uses: actions/setup-python@v2
             with:
                 python-version: '3.10'
@@ -69,18 +61,12 @@ jobs:
         steps:
         -   uses: actions/checkout@v2
 
-        -   name: Cache Python dependencies
-            uses: actions/cache@v1
-            with:
-                path: ~/.cache/pip
-                key: pip-${{ matrix.python-version }}-tests-${{ hashFiles('**/setup.json') }}
-                restore-keys:
-                    pip-${{ matrix.python-version }}-tests
-
-        -   name: Install Python ${{ matrix.python-version }}
-            uses: actions/setup-python@v2
+        -   name: Install Python
+            uses: actions/setup-python@v4
             with:
                 python-version: ${{ matrix.python-version }}
+                cache: 'pip'
+                cache-dependency-path: pyproject.toml
 
         -   name: Install system dependencies
             run: sudo apt update && sudo apt install postgresql
