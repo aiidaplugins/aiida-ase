@@ -67,7 +67,9 @@ jobs:
             run: sudo apt update && sudo apt install postgresql
 
         -   name: Install Python package and dependencies
-            run: pip install -e .[tests] && reentry scan
+            run: pip install -e .[tests]
 
         -   name: Run pytest
+            env:
+                AIIDA_WARN_v3: True
             run: pytest -sv tests

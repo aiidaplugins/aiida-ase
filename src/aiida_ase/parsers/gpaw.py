@@ -7,10 +7,10 @@ from aiida import parsers, plugins
 from ase.io import read
 import numpy
 
-Dict = plugins.DataFactory('dict')
-ArrayData = plugins.DataFactory('array')
-StructureData = plugins.DataFactory('structure')
-TrajectoryData = plugins.DataFactory('array.trajectory')
+Dict = plugins.DataFactory('core.dict')
+ArrayData = plugins.DataFactory('core.array')
+StructureData = plugins.DataFactory('core.structure')
+TrajectoryData = plugins.DataFactory('core.array.trajectory')
 AseCalculation = plugins.CalculationFactory('ase.ase')
 
 
@@ -60,7 +60,7 @@ class GpawParser(parsers.Parser):
         """Parse the retrieved files from a ``AseCalculation``."""
 
         # check what is inside the folder
-        list_of_files = self.retrieved.list_object_names()
+        list_of_files = self.retrieved.base.repository.list_object_names()
 
         # check if it was a relaxation
         optimizer = self.node.inputs.parameters.get_dict().pop('optimizer', None)
@@ -74,7 +74,7 @@ class GpawParser(parsers.Parser):
             # Probably helpful for restarts
             self.logger.error('Output results was not found, inspecting log file')
             # Checking for possible errors common to all calculations
-            with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:
+            with self.retrieved.base.repository.open('_scheduler-stderr.txt', 'r') as handle:
                 lines = handle.readlines()
                 if check_paw_missing(lines):
                     self.logger.error('Could not find paw potentials')
@@ -87,7 +87,9 @@ class GpawParser(parsers.Parser):
                 # This is a relaxation calculation that did not complete
                 # try to get all the structures that are available
                 try:
-                    with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+                    with self.retrieved.base.repository.open(
+                        self.node.base.attributes.get('log_filename'), 'r'
+                    ) as handle:
                         all_ase_traj = read(handle, index=':', format='gpaw-out')
                     trajectory = store_to_trajectory_data(all_ase_traj)
                     self.outputs.trajectory = trajectory
@@ -108,19 +110,19 @@ class GpawParser(parsers.Parser):
         # Check if output structure is needed
         if optimizer is not None:
             # If we are here the calculation did complete sucessfully
-            with self.retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
+            with self.retrieved.base.repository.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
                 atoms = read(handle, format='json')
                 self.out('structure', StructureData(ase=atoms))
             # Store the trajectory as well
-            with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+            with self.retrieved.base.repository.open(self.node.base.attributes.get('log_filename'), 'r') as handle:
                 all_ase_traj = read(handle, index=':', format='gpaw-out')
             self.outputs.trajectory = store_to_trajectory_data(all_ase_traj)
         # load the results dictionary
-        with self.retrieved.open(AseCalculation._OUTPUT_FILE_NAME, 'r') as handle:  # pylint: disable=protected-access
+        with self.retrieved.base.repository.open(AseCalculation._OUTPUT_FILE_NAME, 'r') as handle:  # pylint: disable=protected-access
             json_params = json.load(handle)
 
         # get the relavent data from the log file for the final structure
-        with self.retrieved.open(self.node.get_attribute('log_filename'), 'r') as handle:
+        with self.retrieved.base.repository.open(self.node.base.attributes.get('log_filename'), 'r') as handle:
             atoms_log = read(handle, format='gpaw-out')
         create_output_parameters(atoms_log, json_params)
 
@@ -130,7 +132,7 @@ class GpawParser(parsers.Parser):
             return self.exit_codes.ERROR_FERMI_LEVEL_INF
 
         # look at warnings
-        with self.retrieved.open('_scheduler-stderr.txt', 'r') as handle:
+        with self.retrieved.base.repository.open('_scheduler-stderr.txt', 'r') as handle:
             errors = handle.read()
         if errors:
             json_params['warnings'] = [errors]
@@ -148,6 +150,6 @@ class GpawParser(parsers.Parser):
             self.out('array', array_data)
 
         if json_params:
-            self.out('parameters', Dict(dict=json_params))
+            self.out('parameters', Dict(json_params))
 
         return

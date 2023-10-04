@@ -26,7 +26,7 @@ def test_default_ase(aiida_localhost, generate_calc_job_node, generate_parser, g
     assert 'parameters' in results
 
     data_regression.check({
-        'structure': results['structure'].attributes,
+        'structure': results['structure'].base.attributes.all,
         'parameters': results['parameters'].get_dict(),
     })
 
@@ -55,9 +55,9 @@ def test_default_gpaw(aiida_localhost, generate_calc_job_node, generate_parser, 
     assert 'trajectory' in results
 
     data_regression.check({
-        'structure': results['structure'].attributes,
+        'structure': results['structure'].base.attributes.all,
         'parameters': results['parameters'].get_dict(),
-        'trajectory': results['trajectory'].attributes,
+        'trajectory': results['trajectory'].base.attributes.all,
     })
 
 

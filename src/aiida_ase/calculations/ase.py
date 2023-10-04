@@ -2,9 +2,9 @@
 """`CalcJob` implementation that can be used to wrap around the ASE calculators."""
 from aiida import common, engine, orm, plugins
 
-Dict = plugins.DataFactory('dict')
-StructureData = plugins.DataFactory('structure')
-KpointsData = plugins.DataFactory('array.kpoints')
+Dict = plugins.DataFactory('core.dict')
+StructureData = plugins.DataFactory('core.structure')
+KpointsData = plugins.DataFactory('core.array.kpoints')
 
 
 class AseCalculation(engine.CalcJob):
@@ -218,7 +218,7 @@ class AseCalculation(engine.CalcJob):
             else:
                 raise ValueError('format for extra imports not recognized')
 
-        if self.options.withmpi:
+        if self.options.get('withmpi', False):
             all_imports.append('from ase.parallel import paropen')
 
         all_imports_string = '\n'.join(all_imports) + '\n'
@@ -291,7 +291,7 @@ class AseCalculation(engine.CalcJob):
 
         input_txt += '\n'
         # Dump results to file
-        right_open = 'paropen' if self.options.withmpi else 'open'
+        right_open = 'paropen' if self.options.get('withmpi', False) else 'open'
         input_txt += f"with {right_open}('{self._OUTPUT_FILE_NAME}', 'w') as f:\n"
         input_txt += '    json.dump(results,f)'
         input_txt += '\n'

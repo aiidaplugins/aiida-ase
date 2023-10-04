@@ -25,7 +25,7 @@ classifiers = [
 keywords = ['aiida', 'workflows', 'ase']
 requires-python = '>=3.8'
 dependencies = [
-    'aiida-core~=1.6',
+    'aiida-core~=2.0',
     'ase',
 ]
 

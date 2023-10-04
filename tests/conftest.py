@@ -106,7 +106,7 @@ def generate_calc_job_node():
         node.set_option('max_wallclock_seconds', 1800)
 
         if attributes:
-            node.set_attribute_many(attributes)
+            node.base.attributes.set_many(attributes)
 
         if inputs:
             metadata = inputs.pop('metadata', {})
@@ -117,7 +117,7 @@ def generate_calc_job_node():
 
             for link_label, input_node in flatten_inputs(inputs):
                 input_node.store()
-                node.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
+                node.base.links.add_incoming(input_node, link_type=LinkType.INPUT_CALC, link_label=link_label)
 
         node.store()
 
@@ -126,12 +126,12 @@ def generate_calc_job_node():
             filepath = os.path.join(basepath, 'parsers', 'fixtures', 'ase', test_name)
 
             retrieved = orm.FolderData()
-            retrieved.put_object_from_tree(filepath)
-            retrieved.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
+            retrieved.base.repository.put_object_from_tree(filepath)
+            retrieved.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='retrieved')
             retrieved.store()
 
             remote_folder = orm.RemoteData(computer=computer, remote_path='/tmp')
-            remote_folder.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
+            remote_folder.base.links.add_incoming(node, link_type=LinkType.CREATE, link_label='remote_folder')
             remote_folder.store()
 
         return node
@@ -182,7 +182,7 @@ def generate_inputs_ase(generate_code, generate_structure, generate_kpoints_mesh
             'code': generate_code('ase.ase'),
             'structure': generate_structure(),
             'kpoints': generate_kpoints_mesh(2),
-            'parameters': orm.Dict(dict=parameters),
+            'parameters': orm.Dict(parameters),
             'metadata': {
                 'options': {
                     'resources': {
@@ -202,17 +202,18 @@ def generate_code(fixture_localhost):
 
     def _generate_code(entry_point_name):
         from aiida.common import exceptions
-        from aiida.orm import Code
+        from aiida.orm import InstalledCode
 
         label = f'test.{entry_point_name}'
 
         try:
-            return Code.objects.get(label=label)  # pylint: disable=no-member
+            return InstalledCode.collection.get(label=label)  # pylint: disable=no-member
         except exceptions.NotExistent:
-            return Code(
+            return InstalledCode(
                 label=label,
-                input_plugin_name=entry_point_name,
-                remote_computer_exec=[fixture_localhost, '/bin/true'],
+                default_calc_job_plugin=entry_point_name,
+                computer=fixture_localhost,
+                filepath_executable='/bin/true',
             )
 
     return _generate_code
