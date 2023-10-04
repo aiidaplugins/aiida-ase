@@ -95,7 +95,7 @@ Some addition utility functions are:
 1. If using GPAW it is possible to run parallel calculations using `/path/to/execut/gpaw python run_gpaw.py`. Set up the code through AiiDA by adding in the `gpaw` executable. The add the `python` tag using the command line option
 ```
 settings = {'CMDLINE': ['python']}
-builder.settings = orm.Dict(dict=settings)
+builder.settings = orm.Dict(settings)
 ```
 
 2. If the code you are interested in is present in this plugin registry it might make more sense to use that https://aiidateam.github.io/aiida-registry/

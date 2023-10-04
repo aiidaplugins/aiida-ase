@@ -6,9 +6,9 @@ from aiida import parsers, plugins
 from ase.io import read
 import numpy
 
-Dict = plugins.DataFactory('dict')
-ArrayData = plugins.DataFactory('array')
-StructureData = plugins.DataFactory('structure')
+Dict = plugins.DataFactory('core.dict')
+ArrayData = plugins.DataFactory('core.array')
+StructureData = plugins.DataFactory('core.structure')
 AseCalculation = plugins.CalculationFactory('ase.ase')
 
 
@@ -20,7 +20,7 @@ class AseParser(parsers.Parser):
         retrieved = self.retrieved
 
         # check what is inside the folder
-        list_of_files = retrieved.list_object_names()
+        list_of_files = retrieved.base.repository.list_object_names()
 
         # at least the stdout should exist
         if AseCalculation._OUTPUT_FILE_NAME not in list_of_files:  # pylint: disable=protected-access
@@ -29,15 +29,15 @@ class AseParser(parsers.Parser):
 
         # output structure
         if AseCalculation._output_aseatoms in list_of_files:  # pylint: disable=protected-access
-            with retrieved.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
+            with retrieved.base.repository.open(AseCalculation._output_aseatoms, 'r') as handle:  # pylint: disable=protected-access
                 atoms = read(handle, format='json')
                 structure = StructureData(ase=atoms)
                 self.out('structure', structure)
 
-        filename_stdout = self.node.get_attribute('output_filename')
+        filename_stdout = self.node.base.attributes.all.get('output_filename')
 
         # load the results dictionary
-        with retrieved.open(filename_stdout, 'r') as handle:
+        with retrieved.base.repository.open(filename_stdout, 'r') as handle:
             json_params = json.load(handle)
 
         # extract arrays from json_params
@@ -48,7 +48,7 @@ class AseParser(parsers.Parser):
 
         # look at warnings
         warnings = []
-        with retrieved.open('_scheduler-stderr.txt', 'r') as handle:
+        with retrieved.base.repository.open('_scheduler-stderr.txt', 'r') as handle:
             errors = handle.read()
         if errors:
             warnings = [errors]
@@ -61,6 +61,6 @@ class AseParser(parsers.Parser):
             self.out('array', array_data)
 
         if json_params:
-            self.out('parameters', Dict(dict=json_params))
+            self.out('parameters', Dict(json_params))
 
         return

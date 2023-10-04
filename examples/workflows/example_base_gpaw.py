@@ -31,7 +31,7 @@ def runner():
     ]
 
     # BaTiO3 cubic structure
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     structure = StructureData(cell=cell)
     structure.append_atom(position=(0., 0., 0.), symbols=['Ba'])
     structure.append_atom(position=(alat / 2., alat / 2., alat / 2.), symbols=['Ti'])
@@ -44,7 +44,7 @@ def runner():
     builder.gpaw.code = code
 
     # k-point information
-    KpointsData = DataFactory('array.kpoints')
+    KpointsData = DataFactory('core.array.kpoints')
     kpoints = KpointsData()
     kpoints.set_kpoints_mesh([2,2,2])
     builder.gpaw.kpoints = kpoints
@@ -68,11 +68,11 @@ def runner():
         },
     }
 
-    builder.gpaw.parameters = orm.Dict(dict=parameters)
+    builder.gpaw.parameters = orm.Dict(parameters)
 
     # Running the calculation using gpaw python
     settings = {'CMDLINE': ['python']}
-    builder.gpaw.settings = orm.Dict(dict=settings)
+    builder.gpaw.settings = orm.Dict(settings)
 
     builder.gpaw.metadata.options.resources = {'num_machines': 1}
     builder.gpaw.metadata.options.max_wallclock_seconds = 1 * 30 * 60

@@ -60,7 +60,7 @@ class GpawBaseWorkChain(BaseRestartWorkChain):
         """Validate the inputs."""
         self.ctx.inputs.metadata.options.parser_name = 'ase.gpaw'
         parameters = self.ctx.inputs.parameters.get_dict()
-        self.ctx.inputs.parameters = orm.Dict(dict=parameters)
+        self.ctx.inputs.parameters = orm.Dict(parameters)
 
         # Running the calculation using gpaw python
         if 'settings' in self.ctx.inputs:
@@ -69,10 +69,10 @@ class GpawBaseWorkChain(BaseRestartWorkChain):
             else:
                 settings = self.ctx.inputs.settings.get_dict()
                 settings['CMDLINE'] = ['python']
-                self.ctx.inputs.settings = orm.Dict(dict=settings)
+                self.ctx.inputs.settings = orm.Dict(settings)
         else:
             settings = {'CMDLINE': ['python']}
-            self.ctx.inputs.settings = orm.Dict(dict=settings)
+            self.ctx.inputs.settings = orm.Dict(settings)
 
     def prepare_process(self):
         """Prepare the calculation."""
@@ -110,7 +110,7 @@ class GpawBaseWorkChain(BaseRestartWorkChain):
         parameters['extra_imports'] = [['gpaw', 'Mixer']]
         parameters.setdefault('calculator', {}).setdefault('args', {})['maxiter'] = 1000
 
-        self.ctx.inputs.parameters = orm.Dict(dict=parameters)
+        self.ctx.inputs.parameters = orm.Dict(parameters)
         self.report_error_handled(
             calculation, 'SCF not complete; starting from inital structure with lower mixing and more iterations'
         )
@@ -133,7 +133,7 @@ class GpawBaseWorkChain(BaseRestartWorkChain):
         """Handle the Fermi level is infinite error."""
         parameters = self.ctx.inputs.parameters.get_dict()
         parameters.setdefault('calculator', {}).setdefault('args', {})['nbands'] = -1
-        self.ctx.inputs.parameters = orm.Dict(dict=parameters)
+        self.ctx.inputs.parameters = orm.Dict(parameters)
         self.report_error_handled(
             calculation, 'Fermi level is infinite; starting from initial structure with nbands=-1'
         )

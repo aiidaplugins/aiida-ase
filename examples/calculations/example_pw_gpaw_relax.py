@@ -6,9 +6,9 @@ from ase.build import bulk
 # Change the following value to the ``Code`` that you have configured
 CODE_NAME = 'gpaw-21.6.0@localhost'
 
-Dict = plugins.DataFactory('dict')
-StructureData = plugins.DataFactory('structure')
-KpointsData = plugins.DataFactory('array.kpoints')
+Dict = plugins.DataFactory('core.dict')
+StructureData = plugins.DataFactory('core.structure')
+KpointsData = plugins.DataFactory('core.array.kpoints')
 AseCalculation = plugins.CalculationFactory('ase.ase')
 
 
@@ -33,7 +33,7 @@ def main():
     ]
 
     # BaTiO3 cubic structure
-    StructureData = DataFactory('structure')
+    StructureData = DataFactory('core.structure')
     structure = StructureData(cell=cell)
     structure.append_atom(position=(0., 0., 0.), symbols=['Ba'])
     structure.append_atom(position=(alat / 2., alat / 2., alat / 2.), symbols=['Ti'])
@@ -44,7 +44,7 @@ def main():
     builder.structure = structure
 
     # k-point information
-    KpointsData = DataFactory('array.kpoints')
+    KpointsData = DataFactory('core.array.kpoints')
     kpoints = KpointsData()
     kpoints.set_kpoints_mesh([2,2,2])
     builder.kpoints = kpoints
@@ -79,8 +79,8 @@ def main():
     builder.code = load_code(CODE_NAME)
     builder.structure = structure
     builder.kpoints = kpoints
-    builder.parameters = orm.Dict(dict=parameters)
-    builder.settings = orm.Dict(dict=settings)
+    builder.parameters = orm.Dict(parameters)
+    builder.settings = orm.Dict(settings)
     builder.metadata.options.resources = {'num_machines': 1}
     builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = False
