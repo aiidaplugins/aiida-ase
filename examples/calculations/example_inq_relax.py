@@ -40,8 +40,9 @@ def main():
         },
         'optimizer':{
             'name': 'BFGS',
-            'args': {
-                'maxiter': 50
+            'run_args': {
+                'fmax': 0.02,
+                'steps': 50
             }
         }
     }
