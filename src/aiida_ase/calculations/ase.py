@@ -359,6 +359,9 @@ def get_calculator_impstr(calculator_name):
 
     if calculator_name.lower() == 'espresso':
         return 'from espresso import espresso as custom_calculator'
+    
+    if calculator_name.lower() == 'inq':
+        return 'from pinq.calculator import PinqCalculator as custom_calculator'
 
     possibilities = {
         'abinit': 'abinit.Abinit',
