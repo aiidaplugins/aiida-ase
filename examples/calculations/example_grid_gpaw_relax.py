@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from aiida import engine, orm
+from aiida.plugins import CalculationFactory, DataFactory
 from aiida.orm import load_code
 from ase.build import bulk
 
