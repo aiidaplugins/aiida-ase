@@ -239,7 +239,7 @@ class AseCalculation(engine.CalcJob):
         input_txt += f"atoms = ase.io.read('{self._input_aseatoms}')\n"
         input_txt += '\n'
         input_txt += f'calculator = custom_calculator({calc_argsstr})\n'
-        input_txt += 'atoms.set_calculator(calculator)\n'
+        input_txt += 'atoms.calc = calculator\n'
         input_txt += '\n'
 
         if optimizer is not None:
