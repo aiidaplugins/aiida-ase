@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Example script of how to perform an SCF GPAW calculation on crystalline silicon using AiiDA."""
+"""
+Example script of how to perform a SCF calculation with the python INQ 
+interface on crystalline silicon using AiiDA. 
+"""
 from aiida import engine, orm
 from aiida.orm import load_code
 from aiida.plugins import DataFactory, CalculationFactory
