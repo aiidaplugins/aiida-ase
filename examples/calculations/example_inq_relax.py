@@ -53,7 +53,6 @@ def main():
     builder.structure = structure
     builder.kpoints = kpoints
     builder.parameters = orm.Dict(parameters)
-    builder.settings = orm.Dict(settings)
     builder.metadata.options.resources = {'tot_num_mpiprocs': 4}
     builder.metadata.options.max_wallclock_seconds = 30 * 60  # 30 minutes
     builder.metadata.options.withmpi = True
