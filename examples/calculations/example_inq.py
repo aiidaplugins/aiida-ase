@@ -40,9 +40,6 @@ def main():
         }
     }
 
-    # Running the calculation using GPAW Python
-    settings = {}
-
     builder = AseCalculation.get_builder()
     builder.code = load_code(CODE_NAME)
     builder.structure = structure
