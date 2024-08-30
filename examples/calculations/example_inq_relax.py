@@ -47,8 +47,6 @@ def main():
         }
     }
 
-    # Running the calculation
-    settings = {}
 
     builder = AseCalculation.get_builder()
     builder.code = load_code(CODE_NAME)
