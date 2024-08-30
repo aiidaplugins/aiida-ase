@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Example script of how to perform a SCF calculation with the python INQ 
+Example script of how to perform a geometry optimization with the python INQ 
 interface on crystalline silicon using AiiDA. 
 """
 from aiida import engine, orm
