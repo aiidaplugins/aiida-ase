@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Example script of how to perform a geometry optimization with the python INQ 
-interface on crystalline silicon using AiiDA. 
+Example script of how to perform a geometry optimization with the python INQ
+interface on crystalline silicon using AiiDA.
 """
 from aiida import engine, orm
 from aiida.orm import load_code
-from aiida.plugins import DataFactory, CalculationFactory
+from aiida.plugins import CalculationFactory, DataFactory
 from ase.build import bulk
 
 # Change the following value to the ``Code`` that you have configured
