@@ -239,7 +239,7 @@ class AseCalculation(engine.CalcJob):
         input_txt += f"atoms = ase.io.read('{self._input_aseatoms}')\n"
         input_txt += '\n'
         input_txt += f'calculator = custom_calculator({calc_argsstr})\n'
-        input_txt += 'atoms.set_calculator(calculator)\n'
+        input_txt += 'atoms.calc = calculator\n'
         input_txt += '\n'
 
         if optimizer is not None:
@@ -359,6 +359,9 @@ def get_calculator_impstr(calculator_name):
 
     if calculator_name.lower() == 'espresso':
         return 'from espresso import espresso as custom_calculator'
+
+    if calculator_name.lower() == 'inq':
+        return 'from pinq.calculator import PinqCalculator as custom_calculator'
 
     possibilities = {
         'abinit': 'abinit.Abinit',
